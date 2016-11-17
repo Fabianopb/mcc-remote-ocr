@@ -1,0 +1,17 @@
+# Build docker image using Dockerfile using version tag v1
+docker build -t eu.gcr.io/mcc-2016-g13-p2/backend:v1 .
+
+# Push docker image to Google Container Repository using version tag v1
+gcloud docker -- push eu.gcr.io/mcc-2016-g13-p2/backend:v1 .
+
+# Get kubernetes credentials for Google Container Engine
+gcloud container clusters get-credentials backend
+
+# Create "backend" deployment using the given image
+kubectl run backend --image=eu.gcr.io/mcc-2016-g13-p2/backend:v1 --port=80
+
+# Expose "backend" as a service to the outside world
+kubectl expose deployment backend --type="LoadBalancer"
+
+# Change backend container image (set version tag to whatever you used)
+kubectl set image deployment/backend backend=eu.gcr.io/mcc-2016-g13-p2/backend:v2
