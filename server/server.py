@@ -52,7 +52,7 @@ def make_app():
 if __name__ == '__main__':
     app = make_app()
 
-    client = MongoClient('mongodb://localhost:27017')
+    client = MongoClient('mongodb://mongo:27017')
     db = client.userdata
     app.listen(80)
     tornado.ioloop.IOLoop.current().start()
