@@ -1,1 +1,7 @@
 .DS_Store
+.idea/
+
+server/main.pyc
+server/venv/
+server/.idea/
+server/__pycache__/
