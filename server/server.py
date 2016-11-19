@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import hashlib
 from PIL import Image
 import pytesseract
+from io import BytesIO
 
 
 class MainHandler(RequestHandler):
@@ -40,6 +41,34 @@ class OCRTestHandler(RequestHandler):
         self.write(pytesseract.image_to_string(Image.open('test.jpg')))
 
 
+class OCRHandler(RequestHandler):
+    # TODO: Change to self.current_user after authentication is done
+    user = 'test'
+
+    def post(self):
+        # Check that 'images' form element is in the request
+        try:
+            image_files = self.request.files['images']
+        except KeyError:
+            self.set_status(400)
+            self.finish('Missing \"images\" argument')
+            return
+
+        # Check that at least one image was uploaded
+        if len(image_files) == 0:
+            self.set_status(400)
+            self.finish('No images uploaded')
+            return
+
+        # TODO: Change code to do async processing
+        ocr_data = []
+        for image in image_files:
+            print(image['filename'])
+            ocr_data.append(pytesseract.image_to_string(Image.open(BytesIO(image['body']))))
+        result = ' '.join(ocr_data)
+        self.write(result)
+
+
 # URL routes etc.
 def make_app():
     return tornado.web.Application([
@@ -47,6 +76,7 @@ def make_app():
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
         (r'/test_ocr/', OCRTestHandler),
+        (r'/ocr/', OCRHandler),
     ])
 
 if __name__ == '__main__':
