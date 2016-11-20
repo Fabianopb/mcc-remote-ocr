@@ -1,14 +1,16 @@
 import tornado.ioloop
 import tornado.web
+from pymongo import ReturnDocument
 from tornado.web import RequestHandler
+from tornado import gen
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 import hashlib
 from PIL import Image
 import pytesseract
 from io import BytesIO
 from gridfs import GridFS
 from datetime import datetime
-
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -28,11 +30,11 @@ class DbTestHandler(RequestHandler):
 # Test function for adding users to the DB
 class AddUserHandler(RequestHandler):
     def post(self):
-        user = self.get_body_argument('user')
+        username = self.get_body_argument('username')
         password = self.get_body_argument('password')
         hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
         user = {
-            'username': user,
+            'username': username,
             'password': hashed_password,
             'records': []
         }
@@ -47,69 +49,129 @@ class OCRTestHandler(RequestHandler):
         self.write(pytesseract.image_to_string(Image.open('test.jpg')))
 
 
-# Initial handler for OCR image processing
 class OCRHandler(RequestHandler):
+    """
+    Registers a new transaction in the database, which is used for monitoring image uploads.
+    """
 
     def post(self):
-        # TODO: Change to self.current_user after authentication is done
+        # TODO: Implement authentication
         username = 'test'
 
-        # Check that 'images' form element is in the request
+        images_total = int(self.get_body_argument('images_total'))
+        result = db.transactions.insert_one({
+            'username': username,
+            'creation_time': datetime.utcnow(),
+            'images_total': images_total,
+            'ocr': [],
+            'image_fs_ids': []
+        })
+        self.write(str(result.inserted_id))
+
+
+class UploadImageHandler(RequestHandler):
+    """
+    Handles individual image uploads and updates the user's records, when last image of a transaction is uploaded.
+    """
+
+    def post(self):
+        # TODO: Implement authentication
+        username = 'test'
+
+        uid = ObjectId(self.get_body_argument('uid'))
+        seq = int(self.get_body_argument('seq'))
+
+        # Check that 'image' form element is in the request
         try:
-            image_files = self.request.files['images']
-        except KeyError:
+            image = self.request.files['image'][0]
+        except LookupError:
             self.set_status(400)
             self.finish('Missing \"images\" argument')
             return
 
-        image_count = len(image_files)
-        # Check that at least one image was uploaded
-        if image_count == 0:
+        # Check that the uploaded image has the expected seq number
+        if seq != get_next_seq(uid):
             self.set_status(400)
-            self.finish('No images uploaded')
+            self.finish('Upload order is incorrect. Expected seq: ' + str(get_next_seq(uid)))
             return
 
-        # TODO: Change code to do async processing
-        print('Received ' + str(image_count) + ' images')
-        ocr_data = []
-        image_fs_id_array = []
-        fs = GridFS(db)
-
-        for image in image_files:
-            print('Processing ' + image['filename'])
-            pil_image = Image.open(BytesIO(image['body']))
-            ocr_data.append(pytesseract.image_to_string(pil_image))
-            thumbnail = create_thumbnail(pil_image)
-            image_fs_id = (fs.put(image['body'], content_type=image['content_type'], filename=image['filename']))
-            thumbnail_fs_id = (fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename']))
-            image_fs_id_array.append({'image_fs_id': image_fs_id, 'thumbnail_fs_id': thumbnail_fs_id})
-
-        ocr_result = '\n'.join(ocr_data)
-
-        ocr_record = {
-            'creation_time': datetime.utcnow(),
-            'image_fs_id_array': image_fs_id_array,
-            'ocr_text': ocr_result
+        # Perform OCR and store image and its thumbnail in GridFS
+        ocr_text, image_fs_id, thumbnail_fs_id = perform_ocr_and_store(image)
+        image_fs_ids = {
+            'image_fs_id': image_fs_id,
+            'thumbnail_fs_id': thumbnail_fs_id
         }
 
-        print(ocr_record)
+        # Update transaction document in DB
+        transaction = db.transactions.find_one_and_update({'_id': uid}, {'$set': {'seq': seq}, '$push': {
+            'ocr': ocr_text,
+            'image_fs_ids': image_fs_ids
+        }}, return_document=ReturnDocument.AFTER)
 
-        # TODO: Error handling and cleanup if database update fails
-        db.users.update_one({"username": username}, {'$push': {'records': ocr_record}})
+        # If this was the last expected image, do final processing
+        if seq == transaction['images_total']:
+            ocr_result = '\n'.join(transaction['ocr'])
+            record = {
+                'creation_time': datetime.utcnow(),
+                'image_fs_ids': transaction['image_fs_ids'],
+                'ocr_text': ocr_result
+            }
+            print(record)
+            # TODO: Error handling and cleanup if database update fails
+            # Update user document in DB
+            db.users.update_one({"username": username}, {'$push': {'records': record}})
+            # Delete transaction document from DB
+            db.transactions.delete_one({'_id': uid})
 
-        self.write(ocr_result)
+            # Respond with the final combined text from OCR
+            self.write(ocr_result)
+        else:
+            # If more images are expected, respond with the expected seq number
+            self.write(seq + 1)
+
+
+def perform_ocr_and_store(image):
+    """
+    Performs Tesseract OCR processing on the given image, creates a thumbnail and stores the image and its
+    thumbnail to the database using GridFS.
+
+    Returns OCR results and Object ID:s to the GridFS files.
+
+    :param image: Image to process as a Tornado File from a multipart/form-data request.
+    :return: OCR result text, original image's ID in GridFS, thumbnail's ID in GridFS
+    """
+    print('Processing ' + image['filename'])
+    pil_image = Image.open(BytesIO(image['body']))
+    ocr_text = pytesseract.image_to_string(pil_image)
+    thumbnail = create_thumbnail(pil_image)
+    image_fs_id = fs.put(image['body'], content_type=image['content_type'], filename=image['filename'])
+    thumbnail_fs_id = fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename'])
+    return ocr_text, image_fs_id, thumbnail_fs_id
 
 
 def create_thumbnail(image):
-    """Create a thumbnail of the image given as a parameter, and returns it as a byte array in JPEG format
+    """
+    Creates a thumbnail of the PIL image given as a parameter, and returns it as a byte array in JPEG format.
 
-    Keyword arguments:
-    image -- The image as a PIL Image object
+    :param image: PIL image for thumbnail creation
+    :return: Thumbnail as a byte array in JPEG format
     """
     image.thumbnail(THUMBNAIL_SIZE)
     thumbnail_bytes = BytesIO()
     image.save(thumbnail_bytes, format='JPEG')
     return thumbnail_bytes.getvalue()
+
+
+def get_next_seq(transaction_id):
+    """
+    Returns the sequence number of the next expected image for a transaction.
+
+    :param transaction_id: The transaction document's ObjectID
+    :return: Next expected seq number
+    """
+    transaction = db.transactions.find_one({'_id': transaction_id})
+    return transaction['seq'] + 1
+
 
 # Get image from db
 #    filetest = fs.find_one({'filename': 'test.jpg'})
@@ -124,14 +186,19 @@ def make_app():
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
         (r'/test_ocr/', OCRTestHandler),
-        (r'/ocr/', OCRHandler),
+        (r'/start_ocr/', OCRHandler),
+        (r'/upload_image/', UploadImageHandler),
     ])
+
 
 # Main app
 if __name__ == '__main__':
     app = make_app()
 
     client = MongoClient('mongodb://mongo:27017')
+    if client is None:
+        print("Connection to database failed")
     db = client.userdata
+    fs = GridFS(db)
     app.listen(80)
     tornado.ioloop.IOLoop.current().start()
