@@ -1,3 +1,5 @@
+import json
+
 import tornado.ioloop
 import tornado.web
 from pymongo import ReturnDocument
@@ -63,10 +65,12 @@ class OCRHandler(RequestHandler):
             'username': username,
             'creation_time': datetime.utcnow(),
             'images_total': images_total,
+            'seq': 0,
             'ocr': [],
             'image_fs_ids': []
         })
-        self.write(str(result.inserted_id))
+        response = generate_json_message('Ready for upload', str(result.inserted_id), 1)
+        self.write(response)
 
 
 class UploadImageHandler(RequestHandler):
@@ -74,6 +78,7 @@ class UploadImageHandler(RequestHandler):
     Handles individual image uploads and updates the user's records, when last image of a transaction is uploaded.
     """
 
+    @gen.coroutine
     def post(self):
         # TODO: Implement authentication
         username = 'test'
@@ -86,17 +91,19 @@ class UploadImageHandler(RequestHandler):
             image = self.request.files['image'][0]
         except LookupError:
             self.set_status(400)
-            self.finish('Missing \"images\" argument')
+            response = generate_json_message('No image in request', uid, get_next_seq(uid))
+            self.finish(response)
             return
 
         # Check that the uploaded image has the expected seq number
         if seq != get_next_seq(uid):
             self.set_status(400)
-            self.finish('Upload order is incorrect. Expected seq: ' + str(get_next_seq(uid)))
+            response = generate_json_message('Incorrect upload order', uid, get_next_seq(uid))
+            self.finish(response)
             return
 
         # Perform OCR and store image and its thumbnail in GridFS
-        ocr_text, image_fs_id, thumbnail_fs_id = perform_ocr_and_store(image)
+        ocr_text, image_fs_id, thumbnail_fs_id = yield perform_ocr_and_store(image)
         image_fs_ids = {
             'image_fs_id': image_fs_id,
             'thumbnail_fs_id': thumbnail_fs_id
@@ -124,12 +131,16 @@ class UploadImageHandler(RequestHandler):
             db.transactions.delete_one({'_id': uid})
 
             # Respond with the final combined text from OCR
-            self.write(ocr_result)
+            response = generate_json_message("OCR finished", uid, 0, ocr_result=ocr_result)
+            self.write(response)
         else:
             # If more images are expected, respond with the expected seq number
-            self.write(seq + 1)
+            response = generate_json_message('Image processed', uid, seq + 1)
+            print(response)
+            self.write(response)
 
 
+@gen.coroutine
 def perform_ocr_and_store(image):
     """
     Performs Tesseract OCR processing on the given image, creates a thumbnail and stores the image and its
@@ -173,6 +184,25 @@ def get_next_seq(transaction_id):
     return transaction['seq'] + 1
 
 
+def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
+    """
+    Generates a JSON formatted string for responses.
+
+    :param message:
+    :param transaction_id:
+    :param next_seq:
+    :param ocr_result:
+    :return:
+    """
+    msg = {
+        'uid': str(transaction_id),
+        'message': message,
+        'next_seq': next_seq,
+        'ocr_result': ocr_result
+    }
+    return msg
+
+
 # Get image from db
 #    filetest = fs.find_one({'filename': 'test.jpg'})
 #    self.set_header("Content-type", filetest.content_type)
@@ -186,8 +216,8 @@ def make_app():
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
         (r'/test_ocr/', OCRTestHandler),
-        (r'/start_ocr/', OCRHandler),
-        (r'/upload_image/', UploadImageHandler),
+        (r'/ocr/', OCRHandler),
+        (r'/upload/', UploadImageHandler),
     ])
 
 
