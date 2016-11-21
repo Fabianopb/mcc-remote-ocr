@@ -1,96 +1,76 @@
 package com.temerarious.mccocr13.temerariousocr;
 
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.support.v7.app.AppCompatActivity;
+/**
+ * Created by ivan on 21.11.16.
+ */
+
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.util.Log;
+
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.TextView;
-
-import com.googlecode.tesseract.android.TessBaseAPI;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    Bitmap image;
-    private TessBaseAPI mTess;
-    String datapath = "";
+    // declaration of variables for fragment ets
+    EditText etLogUsername, etLogPassword;
+
+    // declaration of strings for login stage
+    String username, password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        etLogUsername = (EditText) findViewById(R.id.etLogUsername);
+        etLogPassword = (EditText) findViewById(R.id.etLogPassword);
 
-        //init image
-        image = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
 
-        //initialize Tesseract API
-        String language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
+        // Login button
+        Button btnLogin = (Button) findViewById(R.id.login);
+        btnLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                username = etLogUsername.getText().toString();
+                password = etLogPassword.getText().toString();
 
-        checkFile(new File(datapath + "tessdata/"));
 
-        mTess.init(datapath, language);
-    }
+                if (username.equals("test1") && (password.equals("secret1")) || (username.equals("test2") && (password.equals("secret2"))
+                        || (username.equals("test3") && (password.equals("secret3"))))) {
+                    Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
+                    startActivity(intent);
+                }
 
-    public void processImage(View view){
-        String OCRresult = null;
-        mTess.setImage(image);
-        OCRresult = mTess.getUTF8Text();
-        TextView OCRTextView = (TextView) findViewById(R.id.OCRTextView);
-        OCRTextView.setText(OCRresult);
-    }
-
-    private void checkFile(File dir) {
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
-        }
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
-            File datafile = new File(datafilepath);
-
-            if (!datafile.exists()) {
-                copyFiles();
-            }
-        }
-    }
-
-    private void copyFiles() {
-        try {
-            String filepath = datapath + "/tessdata/eng.traineddata";
-            AssetManager assetManager = getAssets();
-
-            InputStream instream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outstream = new FileOutputStream(filepath);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, read);
+                // send username:password to database and check is it correct
+                    /*LoginBW loginBW = new LoginBW(MainActivity.this, getApplicationContext());
+                    loginBW.execute(username, password);*/
+                else {
+                    Toast.makeText(getApplicationContext(), R.string.wrong_pass, Toast.LENGTH_SHORT).show();
+                }
             }
 
+        });
+    }
 
-            outstream.flush();
-            outstream.close();
-            instream.close();
 
-            File file = new File(filepath);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    // internet connection state check
+    public boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
         }
+        return false;
     }
 }
