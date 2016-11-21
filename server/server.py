@@ -1,5 +1,3 @@
-import json
-
 import tornado.ioloop
 import tornado.web
 from pymongo import ReturnDocument
@@ -7,6 +5,7 @@ from tornado.web import RequestHandler
 from tornado import gen
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from bson.errors import InvalidId
 import hashlib
 from PIL import Image
 import pytesseract
@@ -83,8 +82,24 @@ class UploadImageHandler(RequestHandler):
         # TODO: Implement authentication
         username = 'test'
 
-        uid = ObjectId(self.get_body_argument('uid'))
+        # Check that UID is a valid ObjectId
+        try:
+            uid = ObjectId(self.get_body_argument('uid'))
+        except InvalidId:
+            self.set_status(400)
+            response = generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
+            self.finish(response)
+            return
+
         seq = int(self.get_body_argument('seq'))
+
+        # Check that transaction exists in database
+        transaction = db.transactions.find_one({'_id': uid})
+        if transaction is None:
+            self.set_status(400)
+            response = generate_json_message('No such UID in database', uid, 0)
+            self.finish(response)
+            return
 
         # Check that 'image' form element is in the request
         try:
