@@ -36,7 +36,6 @@ public class OCRActivity extends AppCompatActivity {
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     Bitmap image;
     ImageView img;
-
     public TessBaseAPI mTess;
     String datapath = "";
     String[] type = {"Local", "Remote", "Benchmark"};
