@@ -39,6 +39,7 @@ public class OCRActivity extends AppCompatActivity {
     public TessBaseAPI mTess;
     String datapath = "";
     String[] type = {"Local", "Remote", "Benchmark"};
+    String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
 
     @Override
@@ -84,12 +85,12 @@ public class OCRActivity extends AppCompatActivity {
         Spinner spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setAdapter(adapter);
         spinner.setPrompt("Select Type");
-        spinner.setSelection(1);
+        spinner.setSelection(0);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view,
-                                       int position, long id) {
-                Toast.makeText(getBaseContext(), "Position = " + position, Toast.LENGTH_SHORT).show();
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedMode = type[position];
+                Toast.makeText(getBaseContext(), "Selected mode = " + selectedMode, Toast.LENGTH_SHORT).show();
             }
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
@@ -166,11 +167,25 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     public void processImage(View view){
-        String OCRresult = null;
-        mTess.setImage(image);
-        OCRresult = mTess.getUTF8Text();
-        TextView OCRTextView = (TextView) findViewById(R.id.OCRTextView);
-        OCRTextView.setText(OCRresult);
+        // If mode = Local
+        if(selectedMode.equals(type[0])) {
+            String OCRresult = null;
+            mTess.setImage(image);
+            OCRresult = mTess.getUTF8Text();
+            TextView OCRTextView = (TextView) findViewById(R.id.OCRTextView);
+            OCRTextView.setText(OCRresult);
+        }
+        // If mode = Remote
+        else if (selectedMode.equals(type[1])) {
+            String images_total = "1";
+            PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
+            prepareRemote.execute(images_total);
+        }
+        // If mode = Benchmark
+        else if (selectedMode.equals(type[2])) {
+
+        }
+
     }
 
     private void checkFile(File dir) {
