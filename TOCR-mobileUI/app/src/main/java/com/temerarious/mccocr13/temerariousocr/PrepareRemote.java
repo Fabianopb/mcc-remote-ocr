@@ -3,8 +3,10 @@ package com.temerarious.mccocr13.temerariousocr;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
@@ -38,10 +40,9 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
     @Override
     protected String doInBackground(String... params) {
 
-        //SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
-        //String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
+        String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String server_ip = "104.199.92.144";
         String prepare_remote_url = "http://" + server_ip + "/ocr/";
         String images_total = params[0];
 

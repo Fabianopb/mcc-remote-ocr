@@ -9,6 +9,12 @@
     <string name="select_mode">Select mode</string>
     <string name="test_ocr">TEST OCR</string>
 
+    <!-- strings for the settings menu -->
+    <string name="app_settings">Application settings</string>
+    <string name="server_pref">Server address</string>
+    <string name="server_pref_summary">Enter the server IP. Be careful if you provide the wrong address the application will not work!</string>
+    <string name="server_default_ip">0.0.0.0</string>
+
     <!-- strings for the remote mode -->
     <string name="remote_dialog">Preparing backend to receive images</string>
     <string name="remote_failed">Something went wrong with the OCR in the server, sorry! :(</string>
