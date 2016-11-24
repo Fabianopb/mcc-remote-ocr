@@ -8,7 +8,6 @@ import pytesseract
 import tornado.httpserver
 #import tornado.web
 
-
 class MainHandler(RequestHandler):
     def get(self):
         self.write('Backend is running!')
