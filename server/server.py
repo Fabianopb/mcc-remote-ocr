@@ -57,8 +57,8 @@ if __name__ == '__main__':
     db = client.userdata
     
     http_server = tornado.httpserver.HTTPServer(app, ssl_options={
-        "certfile": "/home/mborekcz/Dropbox/Projects/mobile_clouds2/cert/nopass_cert.pem",
-        "keyfile": "/home/mborekcz/Dropbox/Projects/mobile_clouds2/cert/nopass_key.pem",
+        "certfile": "cert/nopass_cert.pem",
+        "keyfile": "cert/nopass_key.pem",
     })
     http_server.listen(80)
     tornado.ioloop.IOLoop.instance().start()
