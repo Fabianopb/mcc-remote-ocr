@@ -5,6 +5,8 @@ from pymongo import MongoClient
 import hashlib
 from PIL import Image
 import pytesseract
+import tornado.httpserver
+#import tornado.web
 
 
 class MainHandler(RequestHandler):
@@ -54,5 +56,10 @@ if __name__ == '__main__':
 
     client = MongoClient('mongodb://mongo:27017')
     db = client.userdata
-    app.listen(80)
-    tornado.ioloop.IOLoop.current().start()
+    
+    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+        "certfile": "/home/mborekcz/Dropbox/Projects/mobile_clouds2/cert/nopass_cert.pem",
+        "keyfile": "/home/mborekcz/Dropbox/Projects/mobile_clouds2/cert/nopass_key.pem",
+    })
+    http_server.listen(80)
+    tornado.ioloop.IOLoop.instance().start()
