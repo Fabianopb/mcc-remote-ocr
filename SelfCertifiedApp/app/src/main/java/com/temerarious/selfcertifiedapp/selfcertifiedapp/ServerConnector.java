@@ -10,8 +10,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -45,27 +47,9 @@ public class ServerConnector extends AsyncTask<String,Void,String> {
     @Override
     protected String doInBackground(String... params) {
 
-        String login_url = "https://130.211.96.63/";
+        String login_url = "https://130.211.59.28/";
 
         try {
-
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-            InputStream caInput = new BufferedInputStream(context.getAssets().open("nopass_cert.crt"));
-            Certificate ca = cf.generateCertificate(caInput);
-            System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
-
-            String keyStoreType = KeyStore.getDefaultType();
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            keyStore.load(null, null);
-            keyStore.setCertificateEntry("ca", ca);
-
-            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-            tmf.init(keyStore);
-
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, tmf.getTrustManagers(), null);
 
             URL url = new URL(login_url);
             HttpsURLConnection httpsURLConnection = (HttpsURLConnection)url.openConnection();
@@ -75,7 +59,7 @@ public class ServerConnector extends AsyncTask<String,Void,String> {
                     return true;
                 }
             });
-            httpsURLConnection.setSSLSocketFactory(context.getSocketFactory());
+            httpsURLConnection.setSSLSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory());
             httpsURLConnection.setRequestMethod("GET");
             httpsURLConnection.setDoInput(true);
             httpsURLConnection.setUseCaches(false);
@@ -94,42 +78,8 @@ public class ServerConnector extends AsyncTask<String,Void,String> {
             httpsURLConnection.disconnect();
             return result;
 
-            //URL url = new URL(login_url);
 
-            // creating an http connection to communicate with url
-            /*
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-            httpURLConnection.setDoInput(true);
-            httpURLConnection.setUseCaches(false);
-            httpURLConnection.connect();
-
-            // reading answer from server
-            InputStream inputStream = httpURLConnection.getInputStream();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-            String result = "";
-            String line = "";
-            while ((line = bufferedReader.readLine()) != null) {
-                result += line;
-            }
-            bufferedReader.close();
-            inputStream.close();
-
-            httpURLConnection.disconnect();
-            return result;
-            */
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | CertificateException | KeyManagementException | KeyStoreException | IOException e) {
             e.printStackTrace();
         }
         return null;
