@@ -1,5 +1,6 @@
 import tornado.ioloop
 import tornado.web
+import tornado.httpserver
 from pymongo import ReturnDocument
 from tornado.web import RequestHandler
 from tornado import gen
@@ -245,5 +246,10 @@ if __name__ == '__main__':
         print("Connection to database failed")
     db = client.userdata
     fs = GridFS(db)
-    app.listen(80)
-    tornado.ioloop.IOLoop.current().start()
+
+    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+        "certfile": "cert/nopass_cert.pem",
+        "keyfile": "cert/nopass_key.pem",
+    })
+    http_server.listen(443)
+    tornado.ioloop.IOLoop.instance().start()
