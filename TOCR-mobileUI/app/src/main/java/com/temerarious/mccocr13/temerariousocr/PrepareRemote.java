@@ -1,19 +1,12 @@
 package com.temerarious.mccocr13.temerariousocr;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,18 +14,23 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
-public class PrepareRemote extends AsyncTask<String,Void,String> {
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+
+class PrepareRemote extends AsyncTask<String,Void,String> {
 
     public OCRActivity source = null;
-    Context context;
+    private Context context;
     //ProgressDialog loading;
 
-    public PrepareRemote(OCRActivity fl, Context ctx) {
+    PrepareRemote(OCRActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }
@@ -43,10 +41,45 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String prepare_remote_url = "http://" + server_ip + "/ocr/";
+        String prepare_remote_url = "https://" + server_ip + "/ocr/";
         String images_total = params[0];
 
         try {
+
+            URL url = new URL(prepare_remote_url);
+            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)url.openConnection();
+            httpsURLConnection.setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            });
+            httpsURLConnection.setSSLSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory());
+            httpsURLConnection.setRequestMethod("GET");
+            httpsURLConnection.setDoInput(true);
+            httpsURLConnection.setUseCaches(false);
+            httpsURLConnection.connect();
+
+            InputStream inputStream = httpsURLConnection.getInputStream();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+            String result = "";
+            String line = "";
+            while ((line = bufferedReader.readLine()) != null) {
+                result += line;
+            }
+            bufferedReader.close();
+            inputStream.close();
+
+            httpsURLConnection.disconnect();
+            return result;
+
+
+        } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+/*        try {
 
             URL url = new URL(prepare_remote_url);
 
@@ -87,7 +120,7 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return null;*/
     }
 
     @Override
