@@ -247,9 +247,12 @@ if __name__ == '__main__':
     db = client.userdata
     fs = GridFS(db)
 
-    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+    http_server = tornado.httpserver.HTTPServer(app)
+    http_server.listen(80)
+
+    https_server = tornado.httpserver.HTTPServer(app, ssl_options={
         "certfile": "cert/nopass_cert.pem",
         "keyfile": "cert/nopass_key.pem",
     })
-    http_server.listen(443)
+    https_server.listen(443)
     tornado.ioloop.IOLoop.instance().start()
