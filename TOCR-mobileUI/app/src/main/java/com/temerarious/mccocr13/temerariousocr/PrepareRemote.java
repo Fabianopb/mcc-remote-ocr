@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -55,10 +56,17 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
                 }
             });
             httpsURLConnection.setSSLSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory());
-            httpsURLConnection.setRequestMethod("GET");
+            httpsURLConnection.setRequestMethod("POST");
+            httpsURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             httpsURLConnection.setDoInput(true);
+            httpsURLConnection.setDoOutput(true);
             httpsURLConnection.setUseCaches(false);
             httpsURLConnection.connect();
+
+            byte[] totalImages = ("images_total=" + images_total).getBytes("UTF-8");
+            OutputStream outputStream = httpsURLConnection.getOutputStream();
+            outputStream.write(totalImages);
+            outputStream.close();
 
             InputStream inputStream = httpsURLConnection.getInputStream();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
@@ -78,49 +86,6 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
             e.printStackTrace();
         }
         return null;
-
-/*        try {
-
-            URL url = new URL(prepare_remote_url);
-
-            // creating an http connection to communicate with url
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("POST");
-            //String credentials = token + ":" + blank;
-            //String credBase64 = Base64.encodeToString(credentials.getBytes(), Base64.DEFAULT).replace("\n", "");
-            //httpURLConnection.setRequestProperty("Authorization", "Basic " + credBase64);
-            httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            httpURLConnection.setDoInput(true);
-            httpURLConnection.setDoOutput(true);
-            httpURLConnection.setUseCaches(false);
-            httpURLConnection.connect();
-
-            // setting instance name in the body of the request
-            byte[] totalImages = ("images_total=" + images_total).getBytes("UTF-8");
-            OutputStream outputStream = httpURLConnection.getOutputStream();
-            outputStream.write(totalImages);
-            outputStream.close();
-
-            // reading answer from server
-            InputStream inputStream = httpURLConnection.getInputStream();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-            String result = "";
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                result += line;
-            }
-            bufferedReader.close();
-            inputStream.close();
-
-            httpURLConnection.disconnect();
-            return result;
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;*/
     }
 
     @Override
