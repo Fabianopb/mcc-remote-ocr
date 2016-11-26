@@ -34,7 +34,7 @@ import static android.R.attr.data;
 public class OCRActivity extends AppCompatActivity {
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
-    Bitmap image;
+    public Bitmap image;
     ImageView img;
     public TessBaseAPI mTess;
     String datapath = "";
