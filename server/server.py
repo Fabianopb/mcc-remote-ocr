@@ -92,9 +92,8 @@ class UploadImageHandler(RequestHandler):
         try:
             uid = ObjectId(self.get_body_argument('uid'))
         except InvalidId:
-            self.set_status(400)
             response = generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         seq = int(self.get_body_argument('seq'))
@@ -102,25 +101,22 @@ class UploadImageHandler(RequestHandler):
         # Check that transaction exists in database
         transaction = db.transactions.find_one({'_id': uid})
         if transaction is None:
-            self.set_status(400)
             response = generate_json_message('No such UID in database', uid, 0)
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Check that 'image' form element is in the request
         try:
             image = self.request.files['image'][0]
         except LookupError:
-            self.set_status(400)
             response = generate_json_message('No image in request', uid, get_next_seq(uid))
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Check that the uploaded image has the expected seq number
         if seq != get_next_seq(uid):
-            self.set_status(400)
             response = generate_json_message('Incorrect upload order', uid, get_next_seq(uid))
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Perform OCR and store image and its thumbnail in GridFS
@@ -222,6 +218,13 @@ def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
         'ocr_result': ocr_result
     }
     return msg
+
+
+def respond_and_log_400(request, msg):
+    request.set_status(400)
+    logging.debug("400 response: " + str(msg))
+    request.finish(msg)
+    return
 
 
 # Get image from db
