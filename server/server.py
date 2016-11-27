@@ -28,6 +28,7 @@ class MainHandler(RequestHandler):
 # Test function which displays MongoDB info
 class DbTestHandler(RequestHandler):
     def get(self):
+        logging.debug(self.request)
         self.write(client.server_info())
 
 
