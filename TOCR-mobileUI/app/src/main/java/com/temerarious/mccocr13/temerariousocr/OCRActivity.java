@@ -7,6 +7,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
@@ -64,6 +65,7 @@ public class OCRActivity extends AppCompatActivity {
                 select_from_galery();
             }
         });
+
         //init image
         image = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
         img=(ImageView) findViewById(R.id.imageView);
@@ -100,7 +102,7 @@ public class OCRActivity extends AppCompatActivity {
     public void select_from_galery(){
         Intent intent = new Intent();
         intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);//
+        intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select File"),SELECT_FILE);
     }
     public void select_from_camera(){
@@ -122,6 +124,7 @@ public class OCRActivity extends AppCompatActivity {
 
     private void onCaptureImageResult(Intent data) {
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+        thumbnail = Bitmap.createScaledBitmap(thumbnail, 100, 100, true);
         image=thumbnail;
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
@@ -140,6 +143,8 @@ public class OCRActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
 
         img.setImageBitmap(thumbnail);
     }
