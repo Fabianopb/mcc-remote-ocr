@@ -99,14 +99,11 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
                 JSONObject jsonObj = new JSONObject(result);
                 Toast.makeText(context, jsonObj.getString("message"), Toast.LENGTH_SHORT).show();
 
-                /*
-                String ocr_result = jsonObj.getString("ocr_result");
                 String uid = jsonObj.getString("uid");
                 String next_seq = jsonObj.getString("next_seq");
 
                 UploadImages uploadImages = new UploadImages(source, context);
                 uploadImages.execute(uid, next_seq);
-                */
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());
