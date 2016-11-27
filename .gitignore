@@ -1,6 +1,4 @@
 .DS_Store
-
-
 TOCR-mobileUI/*.iml
 TOCR-mobileUI/.gradle
 TOCR-mobileUI/local.properties
@@ -9,3 +7,8 @@ TOCR-mobileUI/.idea/libraries
 TOCR-mobileUI/build
 TOCR-mobileUI/captures
 TOCR-mobileUI/.externalNativeBuild
+.idea/
+server/main.pyc
+server/venv/
+server/.idea/
+server/__pycache__/

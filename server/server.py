@@ -13,6 +13,8 @@ import pytesseract
 from io import BytesIO
 from gridfs import GridFS
 from datetime import datetime
+import tornado.options
+import logging
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -60,6 +62,8 @@ class OCRHandler(RequestHandler):
         # TODO: Implement authentication
         username = 'test'
 
+        logging.debug(self.request)
+
         images_total = int(self.get_body_argument('images_total'))
         result = db.transactions.insert_one({
             'username': username,
@@ -82,7 +86,7 @@ class UploadImageHandler(RequestHandler):
     def post(self):
         # TODO: Implement authentication
         username = 'test'
-
+        logging.debug(self.request)
         # Check that UID is a valid ObjectId
         try:
             uid = ObjectId(self.get_body_argument('uid'))
@@ -139,7 +143,7 @@ class UploadImageHandler(RequestHandler):
                 'image_fs_ids': transaction['image_fs_ids'],
                 'ocr_text': ocr_result
             }
-            print(record)
+            logging.debug(record)
             # TODO: Error handling and cleanup if database update fails
             # Update user document in DB
             db.users.update_one({"username": username}, {'$push': {'records': record}})
@@ -152,7 +156,7 @@ class UploadImageHandler(RequestHandler):
         else:
             # If more images are expected, respond with the expected seq number
             response = generate_json_message('Image processed', uid, seq + 1)
-            print(response)
+            logging.debug(response)
             self.write(response)
 
 
@@ -167,7 +171,7 @@ def perform_ocr_and_store(image):
     :param image: Image to process as a Tornado File from a multipart/form-data request.
     :return: OCR result text, original image's ID in GridFS, thumbnail's ID in GridFS
     """
-    print('Processing ' + image['filename'])
+    logging.debug('Processing ' + image['filename'])
     pil_image = Image.open(BytesIO(image['body']))
     ocr_text = pytesseract.image_to_string(pil_image)
     thumbnail = create_thumbnail(pil_image)
@@ -241,9 +245,12 @@ def make_app():
 if __name__ == '__main__':
     app = make_app()
 
+    # Set up logging
+    tornado.options.parse_command_line()
+
     client = MongoClient('mongodb://mongo:27017')
     if client is None:
-        print("Connection to database failed")
+        logging.debug("Connection to database failed")
     db = client.userdata
     fs = GridFS(db)
 
