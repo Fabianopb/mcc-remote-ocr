@@ -28,10 +28,10 @@ def verify_password(userToken, password):
     if user:  # User from token
         return True
     else:
-        userEntry = db.users.find_one("user_name": userToken)
+        userEntry = db.users.find_one({"user_name": userToken})
         if userEntry is not None:
             user = userEntry[user_name]
-                return True
+            return True
             #if password == users.get(userToken): #TODO:check password
             #    return True
 
@@ -51,7 +51,7 @@ def verify_auth_token(token):
         return None  # invalid token
 
     #if data['id'] in users:
-    if db.users.find_one("user_name": data['id']) is not None
+    if db.users.find_one({"user_name": data['id']}) is not None
         return data['id']
     else:
         return None
@@ -126,7 +126,7 @@ class AddTestuserHandler(RequestHandler):
 
 class GetUserHandler(RequestHandler):
     def get(self):
-        user = db.users.find_one("user_name": 'testuser')
+        user = db.users.find_one({"user_name": 'testuser'})
         self.write(user)
 
 # Test function for adding users to the DB
