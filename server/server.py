@@ -95,7 +95,7 @@ class TokenHandler(tornado.web.RequestHandler):
 
 class OtherHandler(tornado.web.RequestHandler):
     @requireAuthentication(verify_password)
-    def get(self):
+    def get(self, username):
         self.write('You are authorised')
 
 
