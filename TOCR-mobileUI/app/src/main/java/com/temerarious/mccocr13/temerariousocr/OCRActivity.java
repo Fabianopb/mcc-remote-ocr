@@ -180,8 +180,10 @@ public class OCRActivity extends AppCompatActivity {
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
             String images_total = "1";
-            PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
-            prepareRemote.execute(images_total);
+            //PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
+            //prepareRemote.execute(images_total);
+            OkHttpTest okHttpTest = new OkHttpTest(OCRActivity.this, OCRActivity.this);
+            okHttpTest.execute(images_total);
         }
         // If mode = Benchmark
         else if (selectedMode.equals(type[2])) {
