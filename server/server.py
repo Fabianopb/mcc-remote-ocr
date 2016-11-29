@@ -48,6 +48,25 @@ class AddUserHandler(RequestHandler):
         self.write('OK')
 
 
+class GetRecordsHandler(RequestHandler):
+    """
+    Get records
+    """
+
+    @gen.coroutine
+    def get(self):
+        # TODO: Implement authentication
+        username = 'test'
+
+        amount = self.get_query_argument('amount')
+
+        user = db.users.find_one({'username': username})
+
+        logging.debug(user['records'])
+
+        self.write(str(user['records']))
+
+
 # Test function for running OCR on test.jpg
 class OCRTestHandler(RequestHandler):
     def get(self):
@@ -242,6 +261,7 @@ def make_app():
         (r'/test_ocr/', OCRTestHandler),
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),
+        (r'/records/', GetRecordsHandler),
     ])
 
 
