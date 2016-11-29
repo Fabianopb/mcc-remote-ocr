@@ -26,14 +26,13 @@ TOKEN_EXPIRATION = 3600  # 60 minutes
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
     if user:  # User from token
+        #g.user = user
         return True
     else:
-        userEntry = db.users.find_one({"user_name": userToken})
-        if userEntry is not None:
-            user = userEntry[user_name]
-            return True
-            #if password == users.get(userToken): #TODO:check password
-            #    return True
+        if userToken in users:
+            if password == users.get(userToken):
+                #g.user = userToken
+                return True
 
     return False
 
@@ -50,8 +49,7 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
 
-    #if data['id'] in users:
-    if db.users.find_one({"user_name": data['id']}) is not None
+    if data['id'] in users:
         return data['id']
     else:
         return None
@@ -111,24 +109,6 @@ class DbTestHandler(RequestHandler):
     def get(self):
         self.write(client.server_info())
 
-class AddTestuserHandler(RequestHandler):
-    def get(self):
-        user = 'testuser'
-        password = 'time2work'
-        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-        user = {
-            'user_name': user,
-            'password': hashed_password,
-            'records': []
-        }
-        self.write('Added')
-
-
-class GetUserHandler(RequestHandler):
-    def get(self):
-        user = db.users.find_one({"user_name": 'testuser'})
-        self.write(user)
-
 # Test function for adding users to the DB
 class AddUserHandler(RequestHandler):
     def post(self):
@@ -159,8 +139,6 @@ def make_app():
         (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
-        (r'/add_testuser/', AddTestUserhandler),
-        (r'/get_user/', GetUserHandler),
         (r'/test_ocr/', OCRTestHandler),
     ])
 
