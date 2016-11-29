@@ -3,7 +3,6 @@ package com.temerarious.mccocr13.temerariousocr;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -52,6 +51,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
         String prepare_remote_url = "https://" + server_ip + "/upload/";
         String uid = params[0];
         String seq = params[1];
+        int imageIndex = Integer.parseInt(seq);
 
         try {
 
@@ -68,7 +68,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
                     .type(MultipartBuilder.FORM)
                     .addFormDataPart("uid", uid)
                     .addFormDataPart("seq", seq)
-                    .addFormDataPart("image", "filename.png", RequestBody.create(MediaType.parse("image/jpg"), source.byteArray))
+                    .addFormDataPart("image", "filename.png", RequestBody.create(MediaType.parse("image/jpg"), source.imageStream.get(imageIndex)))
                     .build();
 
             Request request = new Request.Builder()
@@ -87,7 +87,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
 
     @Override
     protected void onPreExecute() {
-        loading = ProgressDialog.show(context, source.getResources().getString(R.string.remote_dialog), null, true, true);
+        loading = ProgressDialog.show(context, source.getResources().getString(R.string.uploading_images), null, true, true);
     }
 
     @Override
@@ -102,9 +102,12 @@ class UploadImages extends AsyncTask<String,Void,String> {
                 String next_seq = jsonObj.getString("next_seq");
                 String ocr_result = jsonObj.getString("ocr_result");
 
-                Toast.makeText(context, result, Toast.LENGTH_LONG).show();
-
-                source.displayTranslatedText(ocr_result);
+                if (!next_seq.equals("")) {
+                    UploadImages uploadImages = new UploadImages(source, context);
+                    uploadImages.execute(uid, next_seq);
+                } else {
+                    source.displayTranslatedText(ocr_result);
+                }
 
                 loading.dismiss();
 

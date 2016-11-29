@@ -18,5 +18,6 @@
     <!-- strings for the remote mode -->
     <string name="remote_dialog">Preparing backend to receive images</string>
     <string name="remote_failed">Something went wrong with the OCR in the server, sorry! :(</string>
+    <string name="uploading_images">Uploading images...</string>
 
 </resources>

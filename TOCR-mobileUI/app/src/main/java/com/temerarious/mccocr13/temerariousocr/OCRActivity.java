@@ -30,20 +30,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Map;
 
 import static android.R.attr.data;
 
 public class OCRActivity extends AppCompatActivity {
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
-    public Bitmap image;
-    public byte[] byteArray;
-    ImageView img;
+    private Bitmap image;
+    private ImageView img;
     public TessBaseAPI mTess;
     String datapath = "";
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
+
+    public ArrayList<String> imageName;
+    public ArrayList<byte[]> imageStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,7 +108,8 @@ public class OCRActivity extends AppCompatActivity {
     public void select_from_galery(){
         Intent intent = new Intent();
         intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);//
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(Intent.createChooser(intent, "Select File"),SELECT_FILE);
     }
     public void select_from_camera(){
@@ -129,16 +134,20 @@ public class OCRActivity extends AppCompatActivity {
         image=thumbnail;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        byteArray = stream.toByteArray();
 
-        File file = new File(Environment.getExternalStorageDirectory(),
-                System.currentTimeMillis() + ".jpg");
+        imageStream.clear();
+        imageName.clear();
+
+        imageStream.add(stream.toByteArray());
+        imageName.add(System.currentTimeMillis() + ".jpg");
+
+        File file = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
 
         FileOutputStream fo;
         try {
             file.createNewFile();
             fo = new FileOutputStream(file);
-            fo.write(byteArray);
+            fo.write(imageStream.get(0));
             fo.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -161,9 +170,10 @@ public class OCRActivity extends AppCompatActivity {
             }
         }
 
+
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        byteArray = stream.toByteArray();
+        //byteArray = stream.toByteArray();
         image=bm;
         img.setImageBitmap(bm);
 
