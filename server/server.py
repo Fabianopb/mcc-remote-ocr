@@ -135,8 +135,18 @@ class AddTestuserHandler(RequestHandler):
             'records': []
         }
         db.users.insert_one(user)
-
         self.write('OK')
+
+class GetUserHandler(RequestHandler):
+    def get(self):
+        #user = db.users.find_one({"user_name": 'testuser'})
+        user = db.users.find_one({"user_name": 'testuser'})
+        self.write(user[user_name])
+
+class GetPassHandler(RequestHandler):
+    def get(self):
+        user = db.users.find_one({"user_name": 'testuser'})
+        self.write(user[password])
 
 
 # Test function for running OCR on test.jpg
