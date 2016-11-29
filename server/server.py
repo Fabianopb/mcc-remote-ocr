@@ -26,12 +26,12 @@ TOKEN_EXPIRATION = 3600  # 60 minutes
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
     if user:  # User from token
-        #g.user = user
         return True
     else:
-        if userToken in users:
-            if password == users.get(userToken):
-                #g.user = userToken
+        userEntry = db.users.find_one({"user_name": userToken})
+        if userEntry is not None:
+            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password')
+            user = userEntry.get('user_name')
                 return True
 
     return False
@@ -49,7 +49,7 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
 
-    if data['id'] in users:
+    if db.users.find_one({"user_name": data['id']}) is not None:
         return data['id']
     else:
         return None
@@ -137,17 +137,11 @@ class AddTestuserHandler(RequestHandler):
         db.users.insert_one(user)
         self.write('OK')
 
-class GetUserHandler(RequestHandler):
+class GetTestuserHandler(RequestHandler):
     def get(self):
         #user = db.users.find_one({"user_name": 'testuser'})
         user = db.users.find_one({"user_name": 'testuser'})
-        self.write(user[user_name])
-
-class GetPassHandler(RequestHandler):
-    def get(self):
-        user = db.users.find_one({"user_name": 'testuser'})
-        self.write(user[password])
-
+        self.write(user.get[user_name])
 
 # Test function for running OCR on test.jpg
 class OCRTestHandler(RequestHandler):
@@ -163,6 +157,7 @@ def make_app():
         (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
+        (r'/get_testuser/', AddTestuserHandler),
         (r'/add_testuser/', AddTestuserHandler),
         (r'/test_ocr/', OCRTestHandler),
     ])
