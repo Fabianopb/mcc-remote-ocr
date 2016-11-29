@@ -30,8 +30,8 @@ def verify_password(userToken, password):
     else:
         userEntry = db.users.find_one({"user_name": userToken})
         if userEntry is not None:
-            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password')
-            user = userEntry.get('user_name')
+            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
+                user = userEntry.get('user_name')
                 return True
 
     return False
