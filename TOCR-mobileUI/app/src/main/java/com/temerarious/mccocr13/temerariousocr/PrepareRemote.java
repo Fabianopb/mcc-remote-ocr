@@ -7,22 +7,23 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
 class PrepareRemote extends AsyncTask<String,Void,String> {
@@ -47,39 +48,27 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
 
         try {
 
-            URL url = new URL(prepare_remote_url);
-            HttpsURLConnection httpsURLConnection = (HttpsURLConnection)url.openConnection();
-            httpsURLConnection.setHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
-            httpsURLConnection.setSSLSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory());
-            httpsURLConnection.setRequestMethod("POST");
-            httpsURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            httpsURLConnection.setDoInput(true);
-            httpsURLConnection.setDoOutput(true);
-            httpsURLConnection.setUseCaches(false);
-            httpsURLConnection.connect();
+            OkHttpClient client = new OkHttpClient()
+                    .setSslSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory())
+                    .setHostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    });
 
-            byte[] totalImages = ("images_total=" + images_total).getBytes("UTF-8");
-            OutputStream outputStream = httpsURLConnection.getOutputStream();
-            outputStream.write(totalImages);
-            outputStream.close();
+            RequestBody requestBody = new MultipartBuilder()
+                    .type(MultipartBuilder.FORM)
+                    .addFormDataPart("images_total", images_total)
+                    .build();
 
-            InputStream inputStream = httpsURLConnection.getInputStream();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-            String result = "";
-            String line = "";
-            while ((line = bufferedReader.readLine()) != null) {
-                result += line;
-            }
-            bufferedReader.close();
-            inputStream.close();
+            Request request = new Request.Builder()
+                    .url(prepare_remote_url)
+                    .post(requestBody)
+                    .build();
 
-            httpsURLConnection.disconnect();
-            return result;
+            Response response = client.newCall(request).execute();
+            return response.body().string();
 
 
         } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {

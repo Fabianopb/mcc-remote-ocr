@@ -37,6 +37,7 @@ public class OCRActivity extends AppCompatActivity {
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     public Bitmap image;
+    public byte[] byteArray;
     ImageView img;
     public TessBaseAPI mTess;
     String datapath = "";
@@ -126,17 +127,18 @@ public class OCRActivity extends AppCompatActivity {
     private void onCaptureImageResult(Intent data) {
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
         image=thumbnail;
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        byteArray = stream.toByteArray();
 
-        File destination = new File(Environment.getExternalStorageDirectory(),
+        File file = new File(Environment.getExternalStorageDirectory(),
                 System.currentTimeMillis() + ".jpg");
 
         FileOutputStream fo;
         try {
-            destination.createNewFile();
-            fo = new FileOutputStream(destination);
-            fo.write(bytes.toByteArray());
+            file.createNewFile();
+            fo = new FileOutputStream(file);
+            fo.write(byteArray);
             fo.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -159,37 +161,39 @@ public class OCRActivity extends AppCompatActivity {
             }
         }
 
-
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        byteArray = stream.toByteArray();
         image=bm;
         img.setImageBitmap(bm);
-
 
     }
 
     public void processImage(View view){
         // If mode = Local
         if(selectedMode.equals(type[0])) {
-            String OCRresult = null;
+            String ocrResult = null;
             mTess.setImage(image);
-            OCRresult = mTess.getUTF8Text();
-            TextView OCRTextView = (TextView) findViewById(R.id.OCRTextView);
-            OCRTextView.setText(OCRresult);
+            ocrResult = mTess.getUTF8Text();
+            displayTranslatedText(ocrResult);
+
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
             String images_total = "1";
-            //PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
-            //prepareRemote.execute(images_total);
-            OkHttpTest okHttpTest = new OkHttpTest(OCRActivity.this, OCRActivity.this);
-            okHttpTest.execute(images_total);
+            PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
+            prepareRemote.execute(images_total);
         }
         // If mode = Benchmark
         else if (selectedMode.equals(type[2])) {
 
         }
 
+    }
+
+    public void displayTranslatedText(String result) {
+        TextView ocrTextView = (TextView) findViewById(R.id.OCRTextView);
+        ocrTextView.setText(result);
     }
 
     private void checkFile(File dir) {

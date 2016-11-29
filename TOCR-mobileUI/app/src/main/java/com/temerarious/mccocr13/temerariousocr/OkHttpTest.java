@@ -6,8 +6,11 @@ import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
@@ -41,7 +44,7 @@ class OkHttpTest extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String prepare_remote_url = "https://" + server_ip;
+        String prepare_remote_url = "https://" + server_ip + "/ocr/";
         String images_total = params[0];
 
         try {
@@ -55,9 +58,25 @@ class OkHttpTest extends AsyncTask<String,Void,String> {
                         }
                     });
 
-            Request request = new Request.Builder()
-                    .url(prepare_remote_url)
+            RequestBody requestBody = new MultipartBuilder()
+                    .type(MultipartBuilder.FORM)
+                    .addPart(
+                            Headers.of("Content-Disposition", "form-data; name=\"images_total\""),
+                            RequestBody.create(null, images_total))
+                    /*.addPart(
+                            Headers.of("Content-Disposition", "form-data; name=\"image\""),
+                            RequestBody.create(MEDIA_TYPE_PNG, new File("website/static/logo-square.png")))*/
                     .build();
+
+            Request request = new Request.Builder()
+                    //.header("Authorization", "Client-ID " + IMGUR_CLIENT_ID)
+                    .url(prepare_remote_url)
+                    .post(requestBody)
+                    .build();
+
+            /*Request request = new Request.Builder()
+                    .url(prepare_remote_url)
+                    .build();*/
 
             Response response = client.newCall(request).execute();
             return response.body().string();
