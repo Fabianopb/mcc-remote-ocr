@@ -7,14 +7,18 @@ from tornado import gen
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
+from bson.codec_options import CodecOptions
 import hashlib
 from PIL import Image
 import pytesseract
 from io import BytesIO
 from gridfs import GridFS
-from datetime import datetime
+import datetime
 import tornado.options
 import logging
+from pytz import timezone
+import json
+
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -50,21 +54,53 @@ class AddUserHandler(RequestHandler):
 
 class GetRecordsHandler(RequestHandler):
     """
-    Get records
+    Gets a given amount of OCR records from the database and returns the data as JSON
     """
 
     @gen.coroutine
     def get(self):
+        logging.debug(self.request)
+
         # TODO: Implement authentication
         username = 'test'
 
-        amount = self.get_query_argument('amount')
+        amount = int(self.get_query_argument('amount'))
 
-        user = db.users.find_one({'username': username})
+        # Get timezone-aware users-collection
+        users_tz = db.users.with_options(codec_options=CodecOptions(
+            tz_aware=True,
+            tzinfo=timezone('Europe/Helsinki')))
 
-        logging.debug(user['records'])
+        user = users_tz.find_one({'username': username})
+        records = {'records': user['records'][-amount:]}
 
-        self.write(str(user['records']))
+        self.write(json.dumps(records, cls=JSONDateTimeEncoder))
+
+
+class GetImageHandler(RequestHandler):
+    """
+    Gets an image from the GridFS database.
+    """
+
+    @gen.coroutine
+    def get(self, slug):
+        logging.debug(self.request)
+
+        # Check that slug is a valid ObjectId
+        try:
+            fs_id = ObjectId(slug)
+        except InvalidId:
+            respond_and_log_error(self, 404, 'Malformed image ID')
+            return
+
+        # Check that image exists in GridFS
+        image = fs.find_one({'_id': fs_id})
+        if image is None:
+            respond_and_log_error(self, 404, 'No such image in database')
+            return
+
+        self.set_header("Content-type", image.content_type)
+        self.write(image.read())
 
 
 # Test function for running OCR on test.jpg
@@ -87,7 +123,7 @@ class OCRHandler(RequestHandler):
         images_total = int(self.get_body_argument('images_total'))
         result = db.transactions.insert_one({
             'username': username,
-            'creation_time': datetime.utcnow(),
+            'creation_time': datetime.datetime.utcnow(),
             'images_total': images_total,
             'seq': 0,
             'ocr': [],
@@ -112,7 +148,7 @@ class UploadImageHandler(RequestHandler):
             uid = ObjectId(self.get_body_argument('uid'))
         except InvalidId:
             response = generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
-            respond_and_log_400(self, response)
+            respond_and_log_error(self, 400, response)
             return
 
         seq = int(self.get_body_argument('seq'))
@@ -121,7 +157,7 @@ class UploadImageHandler(RequestHandler):
         transaction = db.transactions.find_one({'_id': uid})
         if transaction is None:
             response = generate_json_message('No such UID in database', uid, 0)
-            respond_and_log_400(self, response)
+            respond_and_log_error(self, 400, response)
             return
 
         # Check that 'image' form element is in the request
@@ -129,13 +165,13 @@ class UploadImageHandler(RequestHandler):
             image = self.request.files['image'][0]
         except LookupError:
             response = generate_json_message('No image in request', uid, get_next_seq(uid))
-            respond_and_log_400(self, response)
+            respond_and_log_error(self, 400, response)
             return
 
         # Check that the uploaded image has the expected seq number
         if seq != get_next_seq(uid):
             response = generate_json_message('Incorrect upload order', uid, get_next_seq(uid))
-            respond_and_log_400(self, response)
+            respond_and_log_error(self, 400, response)
             return
 
         # Perform OCR and store image and its thumbnail in GridFS
@@ -155,7 +191,7 @@ class UploadImageHandler(RequestHandler):
         if seq == transaction['images_total']:
             ocr_result = '\n'.join(transaction['ocr'])
             record = {
-                'creation_time': datetime.utcnow(),
+                'creation_time': datetime.datetime.utcnow(),
                 'image_fs_ids': transaction['image_fs_ids'],
                 'ocr_text': ocr_result
             }
@@ -239,17 +275,23 @@ def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
     return msg
 
 
-def respond_and_log_400(request, msg):
-    request.set_status(400)
-    logging.debug("400 response: " + str(msg))
+# Logs and responds with the given error code and message
+def respond_and_log_error(request, error_code, msg):
+    request.set_status(error_code)
+    logging.debug("Error response: " + str(msg))
     request.finish(msg)
     return
 
 
-# Get image from db
-#    filetest = fs.find_one({'filename': 'test.jpg'})
-#    self.set_header("Content-type", filetest.content_type)
-#    self.write(filetest.read())
+# JSONEncoder, which outputs date and datetime in ISO-format and ObjectID as hex string
+class JSONDateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        elif isinstance(obj, (ObjectId)):
+            return str(obj)
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 # URL routes etc.
@@ -262,6 +304,7 @@ def make_app():
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),
         (r'/records/', GetRecordsHandler),
+        (r'/image/([^/]+)', GetImageHandler),
     ])
 
 
