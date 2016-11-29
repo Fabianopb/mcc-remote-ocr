@@ -46,8 +46,8 @@ public class OCRActivity extends AppCompatActivity {
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
 
-    public ArrayList<String> imageName;
-    public ArrayList<byte[]> imageStream;
+    public ArrayList<String> imageName = new ArrayList<String>();
+    public ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +109,7 @@ public class OCRActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        //intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(Intent.createChooser(intent, "Select File"),SELECT_FILE);
     }
     public void select_from_camera(){
@@ -131,12 +131,14 @@ public class OCRActivity extends AppCompatActivity {
 
     private void onCaptureImageResult(Intent data) {
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        image=thumbnail;
+        image = thumbnail;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, stream);
 
-        imageStream.clear();
-        imageName.clear();
+        if (imageStream.size() > 0) {
+            imageStream.clear();
+            imageName.clear();
+        }
 
         imageStream.add(stream.toByteArray());
         imageName.add(System.currentTimeMillis() + ".jpg");
@@ -161,7 +163,7 @@ public class OCRActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
 
-        Bitmap bm=null;
+        Bitmap bm = null;
         if (data != null) {
             try {
                 bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -170,11 +172,18 @@ public class OCRActivity extends AppCompatActivity {
             }
         }
 
-
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        //byteArray = stream.toByteArray();
-        image=bm;
+
+        if (imageStream.size() > 0) {
+            imageStream.clear();
+            imageName.clear();
+        }
+
+        imageStream.add(stream.toByteArray());
+        imageName.add(System.currentTimeMillis() + ".jpg");
+
+        image = bm;
         img.setImageBitmap(bm);
 
     }

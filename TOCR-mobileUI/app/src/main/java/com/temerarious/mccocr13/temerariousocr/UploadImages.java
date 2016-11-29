@@ -35,7 +35,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
 
     public OCRActivity source = null;
     private Context context;
-    ProgressDialog loading;
+    private ProgressDialog loading;
 
     UploadImages(OCRActivity fl, Context ctx) {
         source = fl;
@@ -51,7 +51,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
         String prepare_remote_url = "https://" + server_ip + "/upload/";
         String uid = params[0];
         String seq = params[1];
-        int imageIndex = Integer.parseInt(seq);
+        int imageIndex = Integer.parseInt(seq) - 1;
 
         try {
 
@@ -68,7 +68,7 @@ class UploadImages extends AsyncTask<String,Void,String> {
                     .type(MultipartBuilder.FORM)
                     .addFormDataPart("uid", uid)
                     .addFormDataPart("seq", seq)
-                    .addFormDataPart("image", "filename.png", RequestBody.create(MediaType.parse("image/jpg"), source.imageStream.get(imageIndex)))
+                    .addFormDataPart("image", source.imageName.get(0), RequestBody.create(MediaType.parse("image/jpg"), source.imageStream.get(0)))
                     .build();
 
             Request request = new Request.Builder()
@@ -95,6 +95,8 @@ class UploadImages extends AsyncTask<String,Void,String> {
         if(result != null) {
             try {
 
+                loading.dismiss();
+
                 JSONObject jsonObj = new JSONObject(result);
 
                 String message = jsonObj.getString("message");
@@ -102,14 +104,12 @@ class UploadImages extends AsyncTask<String,Void,String> {
                 String next_seq = jsonObj.getString("next_seq");
                 String ocr_result = jsonObj.getString("ocr_result");
 
-                if (!next_seq.equals("")) {
+                if (!message.equals("OCR finished")) {
                     UploadImages uploadImages = new UploadImages(source, context);
                     uploadImages.execute(uid, next_seq);
                 } else {
                     source.displayTranslatedText(ocr_result);
                 }
-
-                loading.dismiss();
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());
