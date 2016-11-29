@@ -124,6 +124,20 @@ class AddUserHandler(RequestHandler):
 
         self.write('OK')
 
+class AddTestuserHandler(RequestHandler):
+    def get(self):
+        user = 'testuser'
+        password = 'time2work'
+        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        user = {
+            'user_name': user,
+            'password': hashed_password,
+            'records': []
+        }
+        db.users.insert_one(user)
+
+        self.write('OK')
+
 
 # Test function for running OCR on test.jpg
 class OCRTestHandler(RequestHandler):
@@ -139,6 +153,7 @@ def make_app():
         (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
+        (r'/add_testuser/', AddTestuserHandler),
         (r'/test_ocr/', OCRTestHandler),
     ])
 
