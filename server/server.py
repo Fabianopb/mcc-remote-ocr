@@ -18,10 +18,95 @@ import tornado.options
 import logging
 from pytz import timezone
 import json
+import functools
+import base64
+import json
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
+
+
+SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
+TOKEN_EXPIRATION = 3600  # 60 minutes
+
+
+def verify_password(userToken, password):
+    user = verify_auth_token(userToken)
+    if user:  # User from token
+        return True
+    else:
+        userEntry = db.users.find_one({"user_name": userToken})
+        if userEntry is not None:
+            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
+                user = userEntry.get('user_name')
+                return True
+
+    return False
+
+def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
+    s = Serializer(SECRET_KEY, expires_in=expiration)
+    return s.dumps({'id': user})
+
+def verify_auth_token(token):
+    s = Serializer(SECRET_KEY)
+    try:
+        data = s.loads(token)
+    except SignatureExpired:
+        return None  # valid token, but expired
+    except BadSignature:
+        return None  # invalid token
+
+    if db.users.find_one({"user_name": data['id']}) is not None:
+        return data['id']
+    else:
+        return None
+
+def requireAuthentication(auth):
+    def applyAuthentication(func):
+        def _authenticate(requestHandler):
+            requestHandler.set_status(401)
+            requestHandler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
+            requestHandler.finish()
+            return False
+
+        @functools.wraps(func)
+        def newFunc(*args):
+            handler = args[0]
+
+            authHeader = handler.request.headers.get('Authorization')
+            if authHeader is None:
+                return _authenticate(handler)
+            if authHeader[:6] != 'Basic ':
+                return _authenticate(handler)
+
+            authDecoded = base64.b64decode(authHeader[6:])
+            userToken, password = authDecoded.decode().split(':', 2)
+
+            if (auth(userToken, password)):
+                func(*args, userToken)
+            else:
+                _authenticate(handler)
+
+        return newFunc
+    return applyAuthentication
+
+class TokenHandler(tornado.web.RequestHandler):
+    @requireAuthentication(verify_password)
+    def get(self, username):
+        print('Token for user: ' + str(username))
+
+        token = generate_auth_token(username)
+        print(json.dumps({'token': token.decode('ascii')}))
+
+        self.write(json.dumps({'token': token.decode('ascii')}))
+
+
+class OtherHandler(tornado.web.RequestHandler):
+    @requireAuthentication(verify_password)
+    def get(self, username):
+        self.write('You are authorised')
 
 
 class MainHandler(RequestHandler):
@@ -51,6 +136,24 @@ class AddUserHandler(RequestHandler):
 
         self.write('OK')
 
+class AddTestuserHandler(RequestHandler):
+    def get(self):
+        user = 'testuser'
+        password = 'time2work'
+        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        user = {
+            'user_name': user,
+            'password': hashed_password,
+            'records': []
+        }
+        db.users.insert_one(user)
+        self.write('OK')
+
+class GetTestuserHandler(RequestHandler):
+    def get(self):
+        #user = db.users.find_one({"user_name": 'testuser'})
+        user = db.users.find_one({"user_name": 'testuser'})
+        self.write(user.get[user_name])
 
 class GetRecordsHandler(RequestHandler):
     """
@@ -298,8 +401,12 @@ class JSONDateTimeEncoder(json.JSONEncoder):
 def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
+        (r'/token', TokenHandler),
+        (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
+        (r'/get_testuser/', AddTestuserHandler),
+        (r'/add_testuser/', AddTestuserHandler),
         (r'/test_ocr/', OCRTestHandler),
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),
