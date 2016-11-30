@@ -43,11 +43,11 @@ import static java.security.AccessController.getContext;
 
 public class OCRActivity extends AppCompatActivity{
 
+    private OCRInitializer ocrInitializer = new OCRInitializer(this, this);
+
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     private Bitmap image;
     private ImageView img;
-    public TessBaseAPI mTess;
-    String datapath = "";
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery, profilePicImageView;
@@ -60,6 +60,8 @@ public class OCRActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ocr);
+
+        ocrInitializer.initOCR();
 
         imgCamera=(ImageView) findViewById(R.id.camera);
         imgGalery=(ImageView) findViewById(R.id.gallery);
@@ -88,15 +90,6 @@ public class OCRActivity extends AppCompatActivity{
         //init image
         image = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
         img=(ImageView) findViewById(R.id.imageView);
-
-        //initialize Tesseract API
-        String language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
-
-        checkFile(new File(datapath + "tessdata/"));
-
-        mTess.init(datapath, language);
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
@@ -253,11 +246,8 @@ public class OCRActivity extends AppCompatActivity{
 
         // If mode = Local
         if(selectedMode.equals(type[0])) {
-            String ocrResult = null;
-            mTess.setImage(image);
-            ocrResult = mTess.getUTF8Text();
+            String ocrResult = ocrInitializer.runOCR(image);
             displayTranslatedText(ocrResult);
-
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
@@ -278,47 +268,4 @@ public class OCRActivity extends AppCompatActivity{
         ocrTextView.setText(result);
     }
 
-    private void checkFile(File dir) {
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
-        }
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
-            File datafile = new File(datafilepath);
-
-            if (!datafile.exists()) {
-                copyFiles();
-            }
-        }
-    }
-
-    private void copyFiles() {
-        try {
-            String filepath = datapath + "/tessdata/eng.traineddata";
-            AssetManager assetManager = getAssets();
-
-            InputStream instream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outstream = new FileOutputStream(filepath);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, read);
-            }
-
-
-            outstream.flush();
-            outstream.close();
-            instream.close();
-
-            File file = new File(filepath);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }
