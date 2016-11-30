@@ -21,6 +21,8 @@ import functools
 import base64
 import json
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+import requests
+import pprint
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -28,13 +30,20 @@ SOURCE_IMAGE_LIFETIME = 7
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
 
+APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
+FB_SUFFIX = "@facebook.com"
+FB_NO_PASS = "FB account"
 
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
     if user:  # User from token
         return True
     else:
+        if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
+            return False
+
         userEntry = db.users.find_one({"username": userToken})
+
         if userEntry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
                 user = userEntry.get('username')
@@ -85,7 +94,7 @@ def requireAuthentication(auth):
             userToken, password = authDecoded.decode().split(':', 2)
 
             if (auth(userToken, password)):
-                func(*args, userToken)
+                func(*args, username=userToken)
             else:
                 _authenticate(handler)
 
@@ -101,6 +110,45 @@ class TokenHandler(tornado.web.RequestHandler):
 
         token = generate_auth_token(username)
         print(json.dumps({'token': token.decode('ascii')}))
+
+        self.write(json.dumps({'token': token.decode('ascii')}))
+
+class FBTokenHandler(tornado.web.RequestHandler):
+    def get(self):
+        userToken = self.get_argument('token')
+
+        # Verify userToken by FB
+        r = requests.get('https://graph.facebook.com/debug_token?input_token='
+                + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
+        
+        #if r.status_code != requests.codes.ok:
+        if r.status_code != 200:
+            respond_and_log_error(self, 401, 'Authentication failed')
+            return
+        receivedData = json.loads(r.text).get('data')
+
+        if receivedData.get('error') is not None:
+            respond_and_log_error(self, 401, receivedData.get('error').get('message'))
+            return
+
+        pprint.pprint(json.loads(r.receivedData))
+
+        # Extract user id, use it as a username, concatenated with FB_SUFFIX,
+        # so that it does not interfere with locally registered users
+        userId = receivedData.get('user_id')
+        username = userId + FB_SUFFIX
+
+        # FB user still needs to be in the local database. Check if this account
+        # is already there; if not, add it.
+        if db.users.find_one({"user_name": username}) is None:
+            user = {
+                'user_name': user,
+                'password': FB_NO_PASS, # FB users cannot be authorised locally
+                'records': []
+            }
+            db.users.insert_one(user)
+
+        token = generate_auth_token(username)
 
         self.write(json.dumps({'token': token.decode('ascii')}))
 
@@ -408,6 +456,7 @@ def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
         (r'/token', TokenHandler),
+        (r'/fb_token', FBTokenHandler),
         (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
