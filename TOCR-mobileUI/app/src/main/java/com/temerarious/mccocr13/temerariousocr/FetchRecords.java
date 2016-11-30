@@ -32,11 +32,11 @@ import javax.net.ssl.SSLSession;
 
 class FetchRecords extends AsyncTask<String,Void,String> {
 
-    public OCRActivity source = null;
+    public RecordsActivity source = null;
     private Context context;
     //ProgressDialog loading;
 
-    FetchRecords(OCRActivity fl, Context ctx) {
+    FetchRecords(RecordsActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }
