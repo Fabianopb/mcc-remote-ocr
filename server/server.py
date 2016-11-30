@@ -17,16 +17,13 @@ import datetime
 import tornado.options
 import logging
 from pytz import timezone
-import json
 import functools
 import base64
 import json
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
-
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
-
 
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
@@ -45,9 +42,11 @@ def verify_password(userToken, password):
 
     return False
 
+
 def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
     s = Serializer(SECRET_KEY, expires_in=expiration)
     return s.dumps({'id': user})
+
 
 def verify_auth_token(token):
     s = Serializer(SECRET_KEY)
@@ -62,6 +61,7 @@ def verify_auth_token(token):
         return data['id']
     else:
         return None
+
 
 def requireAuthentication(auth):
     def applyAuthentication(func):
@@ -90,7 +90,9 @@ def requireAuthentication(auth):
                 _authenticate(handler)
 
         return newFunc
+
     return applyAuthentication
+
 
 class TokenHandler(tornado.web.RequestHandler):
     @requireAuthentication(verify_password)
@@ -136,6 +138,7 @@ class AddUserHandler(RequestHandler):
 
         self.write('OK')
 
+
 class AddTestuserHandler(RequestHandler):
     def get(self):
         user = 'testuser'
@@ -149,11 +152,13 @@ class AddTestuserHandler(RequestHandler):
         db.users.insert_one(user)
         self.write('OK')
 
+
 class GetTestuserHandler(RequestHandler):
     def get(self):
-        #user = db.users.find_one({"user_name": 'testuser'})
+        # user = db.users.find_one({"user_name": 'testuser'})
         user = db.users.find_one({"user_name": 'testuser'})
         self.write(user.get[user_name])
+
 
 class GetRecordsHandler(RequestHandler):
     """
