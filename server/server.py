@@ -170,8 +170,10 @@ class GetRecordsHandler(RequestHandler):
 
         # TODO: Implement authentication
         username = 'test'
-
-        amount = int(self.get_query_argument('amount'))
+        try:
+            amount = int(self.get_query_argument('amount'))
+        except tornado.web.MissingArgumentError:
+            amount = 1000
 
         # Get timezone-aware users-collection
         users_tz = db.users.with_options(codec_options=CodecOptions(
