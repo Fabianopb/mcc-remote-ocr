@@ -22,6 +22,7 @@ import base64
 import json
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 import requests
+import pprint
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -122,10 +123,17 @@ class FBTokenHandler(tornado.web.RequestHandler):
         if r.status_code != 200:
             respond_and_log_error(self, 401, 'Authentication failed')
             return
+        receivedData = json.loads(r.text).get('data')
+
+        if receivedData.get('error') is not None:
+            respond_and_log_error(self, 401, receivedData.get('error').get('message'))
+            return
+
+        pprint.pprint(json.loads(r.receivedData))
 
         # Extract user id, use it as a username, concatenated with FB_SUFFIX,
         # so that it does not interfere with locally registered users
-        userId = json.loads(r.text).get('data').get('user_id')
+        userId = receivedData.get('user_id')
         username = userId + FB_SUFFIX
 
         # FB user still needs to be in the local database. Check if this account

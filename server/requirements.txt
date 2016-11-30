@@ -4,3 +4,4 @@ pytz
 Pillow
 pytesseract
 itsdangerous
+requests
