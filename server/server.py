@@ -34,10 +34,10 @@ def verify_password(userToken, password):
     if user:  # User from token
         return True
     else:
-        userEntry = db.users.find_one({"user_name": userToken})
+        userEntry = db.users.find_one({"username": userToken})
         if userEntry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
-                user = userEntry.get('user_name')
+                user = userEntry.get('username')
                 return True
 
     return False
@@ -57,7 +57,7 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
 
-    if db.users.find_one({"user_name": data['id']}) is not None:
+    if db.users.find_one({"username": data['id']}) is not None:
         return data['id']
     else:
         return None
@@ -145,7 +145,7 @@ class AddTestuserHandler(RequestHandler):
         password = 'time2work'
         hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
         user = {
-            'user_name': user,
+            'username': user,
             'password': hashed_password,
             'records': []
         }
@@ -155,9 +155,8 @@ class AddTestuserHandler(RequestHandler):
 
 class GetTestuserHandler(RequestHandler):
     def get(self):
-        # user = db.users.find_one({"user_name": 'testuser'})
-        user = db.users.find_one({"user_name": 'testuser'})
-        self.write(user.get[user_name])
+        user = db.users.find_one({"username": 'testuser'})
+        self.write(user.get['username'])
 
 
 class GetRecordsHandler(RequestHandler):
