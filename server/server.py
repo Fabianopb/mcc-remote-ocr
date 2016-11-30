@@ -30,8 +30,8 @@ SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
 
 APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
-FB_SUFFIX "@facebook.com"
-FB_NO_PASS "FB account"
+FB_SUFFIX = "@facebook.com"
+FB_NO_PASS = "FB account"
 
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
@@ -141,10 +141,6 @@ class FBTokenHandler(tornado.web.RequestHandler):
         token = generate_auth_token(username)
 
         self.write(json.dumps({'token': token.decode('ascii')}))
-
-def FBUserToDB(user):
-
-
 
 
 class OtherHandler(tornado.web.RequestHandler):
