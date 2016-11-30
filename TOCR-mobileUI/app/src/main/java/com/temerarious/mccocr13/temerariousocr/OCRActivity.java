@@ -44,13 +44,13 @@ import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
 import static java.security.AccessController.getContext;
 
 
-public class OCRActivity extends AppCompatActivity{
+public class OCRActivity extends AppCompatActivity {
+
+    private OCRInitializer ocrInitializer = new OCRInitializer(this, this);
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     private Bitmap image;
     private ImageView img;
-    public TessBaseAPI mTess;
-    String datapath = "";
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery, profilePicImageView;
@@ -65,12 +65,13 @@ public class OCRActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ocr);
 
-        imgCamera=(ImageView) findViewById(R.id.camera);
-        imgGalery=(ImageView) findViewById(R.id.gallery);
-        profilePicImageView = (ImageView) findViewById(R.id.profilePicture);
-        Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.user_default);
-        profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
+        ocrInitializer.initOCR();
 
+        imgCamera = (ImageView) findViewById(R.id.camera);
+        imgGalery = (ImageView) findViewById(R.id.gallery);
+        profilePicImageView = (ImageView) findViewById(R.id.profilePicture);
+        Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.user_default);
+        profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
 
 
         imgCamera.setOnClickListener(new View.OnClickListener() {
@@ -91,16 +92,7 @@ public class OCRActivity extends AppCompatActivity{
 
         //init image
         image = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
-        img=(ImageView) findViewById(R.id.imageView);
-
-        //initialize Tesseract API
-        String language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
-
-        checkFile(new File(datapath + "tessdata/"));
-
-        mTess.init(datapath, language);
+        img = (ImageView) findViewById(R.id.imageView);
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
@@ -116,12 +108,13 @@ public class OCRActivity extends AppCompatActivity{
                 selectedMode = type[position];
                 Toast.makeText(getBaseContext(), "Selected mode = " + selectedMode, Toast.LENGTH_SHORT).show();
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
 
-        button_save=(Button)findViewById(R.id.button_save);
+        button_save = (Button) findViewById(R.id.button_save);
         button_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -132,14 +125,15 @@ public class OCRActivity extends AppCompatActivity{
 
     }
 
-    public void select_from_galery(){
+    public void select_from_galery() {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        startActivityForResult(Intent.createChooser(intent, "Select File"),SELECT_FILE);
+        startActivityForResult(Intent.createChooser(intent, "Select File"), SELECT_FILE);
     }
-    public void select_from_camera(){
+
+    public void select_from_camera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, REQUEST_CAMERA);
     }
@@ -202,7 +196,6 @@ public class OCRActivity extends AppCompatActivity{
     }
 
 
-
     @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
 
@@ -231,7 +224,7 @@ public class OCRActivity extends AppCompatActivity{
 
     }
 
-    public void processImage(View view){
+    public void processImage(View view) {
         final Handler handle = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -266,12 +259,9 @@ public class OCRActivity extends AppCompatActivity{
 
 
         // If mode = Local
-        if(selectedMode.equals(type[0])) {
-            String ocrResult = null;
-            mTess.setImage(image);
-            ocrResult = mTess.getUTF8Text();
+        if (selectedMode.equals(type[0])) {
+            String ocrResult = ocrInitializer.runOCR(image);
             displayTranslatedText(ocrResult);
-
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
@@ -292,69 +282,23 @@ public class OCRActivity extends AppCompatActivity{
         ocrTextView.setText(result);
     }
 
-    private void checkFile(File dir) {
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
-        }
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
-            File datafile = new File(datafilepath);
 
-            if (!datafile.exists()) {
-                copyFiles();
-            }
-        }
-    }
-
-    private void copyFiles() {
-        try {
-            String filepath = datapath + "/tessdata/eng.traineddata";
-            AssetManager assetManager = getAssets();
-
-            InputStream instream = assetManager.open("tessdata/eng.traineddata");
-            OutputStream outstream = new FileOutputStream(filepath);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, read);
-            }
-
-
-            outstream.flush();
-            outstream.close();
-            instream.close();
-
-            File file = new File(filepath);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void saveToText()
-    {
+    public void saveToText() {
         try {
             File path = Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS);
             File myFile = new File(path, "mytextfile.txt");
-            FileOutputStream fOut = new FileOutputStream(myFile,true);
+            FileOutputStream fOut = new FileOutputStream(myFile, true);
             OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
             myOutWriter.append("the text I want added to the file");
             myOutWriter.close();
             fOut.close();
 
-            Toast.makeText(this,"Text file Saved !",Toast.LENGTH_LONG).show();
-        }
-
-        catch (java.io.IOException e) {
+            Toast.makeText(this, "Text file Saved !", Toast.LENGTH_LONG).show();
+        } catch (java.io.IOException e) {
 
             //do something if an IOException occurs.
-            Toast.makeText(this,"ERROR - Text could't be added",Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "ERROR - Text could't be added", Toast.LENGTH_LONG).show();
         }
     }
 }
