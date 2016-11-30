@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -35,9 +36,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
 import static java.security.AccessController.getContext;
 
 
@@ -52,6 +55,7 @@ public class OCRActivity extends AppCompatActivity{
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery, profilePicImageView;
     ProgressDialog progressDoalog;
+    Button button_save;
 
     public ArrayList<String> imageName = new ArrayList<String>();
     public ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
@@ -116,13 +120,23 @@ public class OCRActivity extends AppCompatActivity{
             public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
+
+        button_save=(Button)findViewById(R.id.button_save);
+        button_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveToText();
+            }
+        });
+        saveToText();
+
     }
 
     public void select_from_galery(){
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        //intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(Intent.createChooser(intent, "Select File"),SELECT_FILE);
     }
     public void select_from_camera(){
@@ -155,7 +169,7 @@ public class OCRActivity extends AppCompatActivity{
         img.setImageBitmap(bitmap);*/
 
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        thumbnail = Bitmap.createScaledBitmap(thumbnail, 500, 500, true);
+        //thumbnail = Bitmap.createScaledBitmap(thumbnail, 500, 500, true);
         image = thumbnail;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, stream);
@@ -319,6 +333,28 @@ public class OCRActivity extends AppCompatActivity{
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void saveToText()
+    {
+        try {
+            File path = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS);
+            File myFile = new File(path, "mytextfile.txt");
+            FileOutputStream fOut = new FileOutputStream(myFile,true);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            myOutWriter.append("the text I want added to the file");
+            myOutWriter.close();
+            fOut.close();
+
+            Toast.makeText(this,"Text file Saved !",Toast.LENGTH_LONG).show();
+        }
+
+        catch (java.io.IOException e) {
+
+            //do something if an IOException occurs.
+            Toast.makeText(this,"ERROR - Text could't be added",Toast.LENGTH_LONG).show();
         }
     }
 }
