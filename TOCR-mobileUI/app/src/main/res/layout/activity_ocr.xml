@@ -29,6 +29,15 @@
         android:id="@+id/camera"
         android:clickable="true" />
 
+    <ImageView
+        android:id="@+id/profilePicture"
+        android:layout_height="100dp"
+        android:layout_width="100dp"
+        android:layout_marginTop="20dp"
+        android:layout_toEndOf="@+id/gallery"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="10dp" />
+
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -50,6 +59,7 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
         android:id="@+id/imageView"
         android:src="@drawable/test_image"
         android:layout_below="@+id/gallery" />
@@ -57,6 +67,7 @@
     <Button
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_marginTop="10dp"
         android:layout_gravity="center"
         android:text="@string/test_ocr"
         android:id="@+id/button_test"
