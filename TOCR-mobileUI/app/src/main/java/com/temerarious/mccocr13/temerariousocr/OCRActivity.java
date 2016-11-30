@@ -28,6 +28,10 @@ import android.widget.Toast;
 import com.facebook.Profile;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -69,7 +73,8 @@ public class OCRActivity extends AppCompatActivity{
         Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.user_default);
         profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
 
-
+        FetchRecords fetchRecords = new FetchRecords(OCRActivity.this, OCRActivity.this);
+        fetchRecords.execute("5");
 
         imgCamera.setOnClickListener(new View.OnClickListener() {
 
@@ -261,6 +266,36 @@ public class OCRActivity extends AppCompatActivity{
         }
 
 
+    }
+
+    public void createRecordsList(JSONArray recordsJSONArray) {
+
+        int totalRecords = recordsJSONArray.length();
+        for (int i = 0; i < totalRecords; i++) {
+
+            try {
+                JSONObject record = recordsJSONArray.getJSONObject(i);
+                String creationTime = record.getString("creation_time");
+                String ocr_text = record.getString("ocr_text");
+                // Insert ocr text in the listview item
+
+                JSONArray imagesJSONArray = record.getJSONArray("image_fs_ids");
+
+                int totalImages = imagesJSONArray.length();
+                for (int j = 0; j < totalImages; j++) {
+                    JSONObject imageIDs = imagesJSONArray.getJSONObject(j);
+                    String imageID = imageIDs.getString("image_fs_id");
+                    String thumbID = imageIDs.getString("thumbnail_fs_id");
+                    // Insert first thumb in the listview item
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        
     }
 
     public void displayTranslatedText(String result) {
