@@ -1,5 +1,6 @@
 package com.temerarious.mccocr13.temerariousocr;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -34,7 +35,7 @@ class FetchRecords extends AsyncTask<String,Void,String> {
 
     public RecordsActivity source = null;
     private Context context;
-    //ProgressDialog loading;
+    private ProgressDialog loading;
 
     FetchRecords(RecordsActivity fl, Context ctx) {
         source = fl;
@@ -76,24 +77,20 @@ class FetchRecords extends AsyncTask<String,Void,String> {
     }
 
     @Override
-    protected void onPreExecute() {}
+    protected void onPreExecute() {
+        loading = ProgressDialog.show(context, source.getResources().getString(R.string.getting_records), null, true, true);
+    }
 
     @Override
     protected void onPostExecute(String result) {
+        loading.dismiss();
         if(result != null) {
-
             try {
 
                 JSONObject jsonObj = new JSONObject(result);
                 JSONArray recordsArray = jsonObj.getJSONArray("records");
 
                 source.createRecordsList(recordsArray);
-
-                /*String uid = jsonObj.getString("uid");
-                String next_seq = jsonObj.getString("next_seq");
-
-                UploadImages uploadImages = new UploadImages(source, context);
-                uploadImages.execute(uid, next_seq);*/
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());

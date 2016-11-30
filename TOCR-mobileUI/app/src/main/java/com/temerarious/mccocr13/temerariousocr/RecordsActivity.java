@@ -22,8 +22,10 @@ public class RecordsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_records);
 
+        String amountOfRecords = "10";
+
         FetchRecords fetchRecords = new FetchRecords(RecordsActivity.this, RecordsActivity.this);
-        fetchRecords.execute("5");
+        fetchRecords.execute(amountOfRecords);
     }
 
     public void createRecordsList(JSONArray recordsJSONArray) {

@@ -84,7 +84,12 @@ public class RecordsListAdapter extends ArrayAdapter<String> {
 
         ocrThumb.setImageBitmap(bmp);
 
-        ocrText.setText(mTextsList.get(i));
+        String displayedText = mTextsList.get(i);
+        int stringLimit = 30;
+        if (displayedText.length() > stringLimit) {
+            displayedText = displayedText.substring(0, stringLimit) + "...";
+        }
+        ocrText.setText(displayedText);
 
         return rowView;
 
