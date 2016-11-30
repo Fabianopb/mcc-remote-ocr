@@ -86,7 +86,8 @@ class FetchRecords extends AsyncTask<String,Void,String> {
 
                 JSONObject jsonObj = new JSONObject(result);
                 JSONArray recordsArray = jsonObj.getJSONArray("records");
-                Log.v("TAG", String.valueOf(recordsArray.length()));
+
+                source.createRecordsList(recordsArray);
 
                 /*String uid = jsonObj.getString("uid");
                 String next_seq = jsonObj.getString("next_seq");

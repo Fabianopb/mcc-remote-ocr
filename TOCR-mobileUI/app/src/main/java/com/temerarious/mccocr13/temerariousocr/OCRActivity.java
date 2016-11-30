@@ -2,7 +2,9 @@ package com.temerarious.mccocr13.temerariousocr;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.Cursor;
@@ -13,6 +15,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +25,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -270,6 +275,13 @@ public class OCRActivity extends AppCompatActivity{
 
     public void createRecordsList(JSONArray recordsJSONArray) {
 
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        final ArrayList<String> recordsList = new ArrayList<String>();
+        final ArrayList<ArrayList<String>> imagesListsList = new ArrayList<ArrayList<String>>();
+        final ArrayList<ArrayList<String>> thumbsListsList = new ArrayList<ArrayList<String>>();
+
         int totalRecords = recordsJSONArray.length();
         for (int i = 0; i < totalRecords; i++) {
 
@@ -277,17 +289,22 @@ public class OCRActivity extends AppCompatActivity{
                 JSONObject record = recordsJSONArray.getJSONObject(i);
                 String creationTime = record.getString("creation_time");
                 String ocr_text = record.getString("ocr_text");
-                // Insert ocr text in the listview item
+                recordsList.add(ocr_text);
 
                 JSONArray imagesJSONArray = record.getJSONArray("image_fs_ids");
+                ArrayList<String> imagesList = new ArrayList<String>();
+                ArrayList<String> thumbsList = new ArrayList<String>();
 
                 int totalImages = imagesJSONArray.length();
                 for (int j = 0; j < totalImages; j++) {
                     JSONObject imageIDs = imagesJSONArray.getJSONObject(j);
                     String imageID = imageIDs.getString("image_fs_id");
+                    imagesList.add(imageID);
                     String thumbID = imageIDs.getString("thumbnail_fs_id");
-                    // Insert first thumb in the listview item
+                    thumbsList.add(thumbID);
                 }
+                imagesListsList.add(imagesList);
+                thumbsListsList.add(thumbsList);
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -295,7 +312,23 @@ public class OCRActivity extends AppCompatActivity{
 
         }
 
-        
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(OCRActivity.this);
+        String server_ip = SP.getString("server_ip", getResources().getString(R.string.server_default_ip));
+
+        ListView list = (ListView) findViewById(R.id.records_listview);
+        RecordsListAdapter adapter = new RecordsListAdapter(this, recordsList, thumbsListsList, server_ip);
+        list.setAdapter(adapter);
+
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                // start a new activity with the full text and the full size images
+                // pass the imagesList in the position "position" (imagesListList.get(position)) into the activity
+
+            }
+        });
     }
 
     public void displayTranslatedText(String result) {

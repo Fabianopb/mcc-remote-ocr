@@ -88,6 +88,11 @@
         android:id="@+id/OCRTextView"
         android:textSize="18sp" />
 
+    <ListView
+        android:id="@+id/records_listview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/OCRTextView" />
 
 </RelativeLayout>
 </ScrollView>
