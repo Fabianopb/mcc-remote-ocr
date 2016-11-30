@@ -13,6 +13,8 @@ import pytesseract
 from io import BytesIO
 from gridfs import GridFS
 from datetime import datetime
+import tornado.options
+import logging
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -26,6 +28,7 @@ class MainHandler(RequestHandler):
 # Test function which displays MongoDB info
 class DbTestHandler(RequestHandler):
     def get(self):
+        logging.debug(self.request)
         self.write(client.server_info())
 
 
@@ -60,6 +63,8 @@ class OCRHandler(RequestHandler):
         # TODO: Implement authentication
         username = 'test'
 
+        logging.debug(self.request)
+
         images_total = int(self.get_body_argument('images_total'))
         result = db.transactions.insert_one({
             'username': username,
@@ -82,14 +87,13 @@ class UploadImageHandler(RequestHandler):
     def post(self):
         # TODO: Implement authentication
         username = 'test'
-
+        logging.debug(self.request)
         # Check that UID is a valid ObjectId
         try:
             uid = ObjectId(self.get_body_argument('uid'))
         except InvalidId:
-            self.set_status(400)
             response = generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         seq = int(self.get_body_argument('seq'))
@@ -97,25 +101,22 @@ class UploadImageHandler(RequestHandler):
         # Check that transaction exists in database
         transaction = db.transactions.find_one({'_id': uid})
         if transaction is None:
-            self.set_status(400)
             response = generate_json_message('No such UID in database', uid, 0)
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Check that 'image' form element is in the request
         try:
             image = self.request.files['image'][0]
         except LookupError:
-            self.set_status(400)
             response = generate_json_message('No image in request', uid, get_next_seq(uid))
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Check that the uploaded image has the expected seq number
         if seq != get_next_seq(uid):
-            self.set_status(400)
             response = generate_json_message('Incorrect upload order', uid, get_next_seq(uid))
-            self.finish(response)
+            respond_and_log_400(self, response)
             return
 
         # Perform OCR and store image and its thumbnail in GridFS
@@ -139,7 +140,7 @@ class UploadImageHandler(RequestHandler):
                 'image_fs_ids': transaction['image_fs_ids'],
                 'ocr_text': ocr_result
             }
-            print(record)
+            logging.debug(record)
             # TODO: Error handling and cleanup if database update fails
             # Update user document in DB
             db.users.update_one({"username": username}, {'$push': {'records': record}})
@@ -152,7 +153,7 @@ class UploadImageHandler(RequestHandler):
         else:
             # If more images are expected, respond with the expected seq number
             response = generate_json_message('Image processed', uid, seq + 1)
-            print(response)
+            logging.debug(response)
             self.write(response)
 
 
@@ -167,7 +168,7 @@ def perform_ocr_and_store(image):
     :param image: Image to process as a Tornado File from a multipart/form-data request.
     :return: OCR result text, original image's ID in GridFS, thumbnail's ID in GridFS
     """
-    print('Processing ' + image['filename'])
+    logging.debug('Processing ' + image['filename'])
     pil_image = Image.open(BytesIO(image['body']))
     ocr_text = pytesseract.image_to_string(pil_image)
     thumbnail = create_thumbnail(pil_image)
@@ -219,6 +220,13 @@ def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
     return msg
 
 
+def respond_and_log_400(request, msg):
+    request.set_status(400)
+    logging.debug("400 response: " + str(msg))
+    request.finish(msg)
+    return
+
+
 # Get image from db
 #    filetest = fs.find_one({'filename': 'test.jpg'})
 #    self.set_header("Content-type", filetest.content_type)
@@ -241,15 +249,21 @@ def make_app():
 if __name__ == '__main__':
     app = make_app()
 
+    # Set up logging
+    tornado.options.parse_command_line()
+
     client = MongoClient('mongodb://mongo:27017')
     if client is None:
-        print("Connection to database failed")
+        logging.debug("Connection to database failed")
     db = client.userdata
     fs = GridFS(db)
 
-    http_server = tornado.httpserver.HTTPServer(app, ssl_options={
+    http_server = tornado.httpserver.HTTPServer(app)
+    http_server.listen(80)
+
+    https_server = tornado.httpserver.HTTPServer(app, ssl_options={
         "certfile": "cert/nopass_cert.pem",
         "keyfile": "cert/nopass_key.pem",
     })
-    http_server.listen(443)
+    https_server.listen(443)
     tornado.ioloop.IOLoop.instance().start()
