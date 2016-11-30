@@ -91,7 +91,7 @@ def requireAuthentication(auth):
             userToken, password = authDecoded.decode().split(':', 2)
 
             if (auth(userToken, password)):
-                func(*args, userToken)
+                func(*args, username=userToken)
             else:
                 _authenticate(handler)
 
