@@ -17,11 +17,146 @@ import datetime
 import tornado.options
 import logging
 from pytz import timezone
+import functools
+import base64
 import json
-
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+import requests
+import pprint
 
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
+
+SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
+TOKEN_EXPIRATION = 3600  # 60 minutes
+
+APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
+FB_SUFFIX = "@facebook.com"
+FB_NO_PASS = "FB account"
+
+def verify_password(userToken, password):
+    user = verify_auth_token(userToken)
+    if user:  # User from token
+        return True
+    else:
+        if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
+            return False
+
+        userEntry = db.users.find_one({"username": userToken})
+
+        if userEntry is not None:
+            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
+                user = userEntry.get('username')
+                return True
+
+    return False
+
+
+def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
+    s = Serializer(SECRET_KEY, expires_in=expiration)
+    return s.dumps({'id': user})
+
+
+def verify_auth_token(token):
+    s = Serializer(SECRET_KEY)
+    try:
+        data = s.loads(token)
+    except SignatureExpired:
+        return None  # valid token, but expired
+    except BadSignature:
+        return None  # invalid token
+
+    if db.users.find_one({"username": data['id']}) is not None:
+        return data['id']
+    else:
+        return None
+
+
+def requireAuthentication(auth):
+    def applyAuthentication(func):
+        def _authenticate(requestHandler):
+            requestHandler.set_status(401)
+            requestHandler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
+            requestHandler.finish()
+            return False
+
+        @functools.wraps(func)
+        def newFunc(*args):
+            handler = args[0]
+
+            authHeader = handler.request.headers.get('Authorization')
+            if authHeader is None:
+                return _authenticate(handler)
+            if authHeader[:6] != 'Basic ':
+                return _authenticate(handler)
+
+            authDecoded = base64.b64decode(authHeader[6:])
+            userToken, password = authDecoded.decode().split(':', 2)
+
+            if (auth(userToken, password)):
+                func(*args, username=userToken)
+            else:
+                _authenticate(handler)
+
+        return newFunc
+
+    return applyAuthentication
+
+
+class TokenHandler(tornado.web.RequestHandler):
+    @requireAuthentication(verify_password)
+    def get(self, username):
+        print('Token for user: ' + str(username))
+
+        token = generate_auth_token(username)
+        print(json.dumps({'token': token.decode('ascii')}))
+
+        self.write(json.dumps({'token': token.decode('ascii')}))
+
+class FBTokenHandler(tornado.web.RequestHandler):
+    def get(self):
+        userToken = self.get_argument('token')
+
+        # Verify userToken by FB
+        r = requests.get('https://graph.facebook.com/debug_token?input_token='
+                + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
+        
+        #if r.status_code != requests.codes.ok:
+        if r.status_code != 200:
+            respond_and_log_error(self, 401, 'Authentication failed')
+            return
+        receivedData = json.loads(r.text).get('data')
+
+        if receivedData.get('error') is not None:
+            respond_and_log_error(self, 401, receivedData.get('error').get('message'))
+            return
+
+        pprint.pprint(json.loads(r.receivedData))
+
+        # Extract user id, use it as a username, concatenated with FB_SUFFIX,
+        # so that it does not interfere with locally registered users
+        userId = receivedData.get('user_id')
+        username = userId + FB_SUFFIX
+
+        # FB user still needs to be in the local database. Check if this account
+        # is already there; if not, add it.
+        if db.users.find_one({"user_name": username}) is None:
+            user = {
+                'user_name': user,
+                'password': FB_NO_PASS, # FB users cannot be authorised locally
+                'records': []
+            }
+            db.users.insert_one(user)
+
+        token = generate_auth_token(username)
+
+        self.write(json.dumps({'token': token.decode('ascii')}))
+
+
+class OtherHandler(tornado.web.RequestHandler):
+    @requireAuthentication(verify_password)
+    def get(self, username):
+        self.write('You are authorised')
 
 
 class MainHandler(RequestHandler):
@@ -52,6 +187,26 @@ class AddUserHandler(RequestHandler):
         self.write('OK')
 
 
+class AddTestuserHandler(RequestHandler):
+    def get(self):
+        user = 'testuser'
+        password = 'time2work'
+        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        user = {
+            'username': user,
+            'password': hashed_password,
+            'records': []
+        }
+        db.users.insert_one(user)
+        self.write('OK')
+
+
+class GetTestuserHandler(RequestHandler):
+    def get(self):
+        user = db.users.find_one({"username": 'testuser'})
+        self.write(user.get['username'])
+
+
 class GetRecordsHandler(RequestHandler):
     """
     Gets a given amount of OCR records from the database and returns the data as JSON
@@ -63,8 +218,10 @@ class GetRecordsHandler(RequestHandler):
 
         # TODO: Implement authentication
         username = 'test'
-
-        amount = int(self.get_query_argument('amount'))
+        try:
+            amount = int(self.get_query_argument('amount'))
+        except tornado.web.MissingArgumentError:
+            amount = 1000
 
         # Get timezone-aware users-collection
         users_tz = db.users.with_options(codec_options=CodecOptions(
@@ -298,8 +455,13 @@ class JSONDateTimeEncoder(json.JSONEncoder):
 def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
+        (r'/token', TokenHandler),
+        (r'/fb_token', FBTokenHandler),
+        (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
         (r'/add_user/', AddUserHandler),
+        (r'/get_testuser/', AddTestuserHandler),
+        (r'/add_testuser/', AddTestuserHandler),
         (r'/test_ocr/', OCRTestHandler),
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),

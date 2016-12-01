@@ -2,7 +2,9 @@ package com.temerarious.mccocr13.temerariousocr;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.Cursor;
@@ -13,6 +15,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -22,12 +26,17 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.Profile;
 import com.googlecode.tesseract.android.TessBaseAPI;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -73,7 +82,10 @@ public class OCRActivity extends AppCompatActivity {
         Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.user_default);
         profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
         imgCamera.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -274,7 +286,11 @@ public class OCRActivity extends AppCompatActivity {
 
         }
 
+    }
 
+    public void openRecords(View view) {
+        Intent intent = new Intent(getApplicationContext(), RecordsActivity.class);
+        startActivity(intent);
     }
 
     public void displayTranslatedText(String result) {

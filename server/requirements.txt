@@ -3,3 +3,5 @@ pymongo
 pytz
 Pillow
 pytesseract
+itsdangerous
+requests

@@ -76,6 +76,18 @@
         android:layout_below="@+id/imageView"
         android:onClick="processImage" />
 
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center"
+        android:text="@string/show_records"
+        android:id="@+id/button_records"
+        android:background="@drawable/button"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/button_test"
+        android:onClick="openRecords" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -84,10 +96,11 @@
         android:layout_marginBottom="100dp"
         android:text=""
         android:layout_centerHorizontal="true"
-        android:layout_below="@+id/button_test"
+        android:layout_below="@+id/button_records"
         android:id="@+id/OCRTextView"
         android:textSize="18sp" />
 
+<<<<<<< HEAD
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -100,5 +113,7 @@
         />
 
 
+=======
+>>>>>>> master
 </RelativeLayout>
 </ScrollView>
