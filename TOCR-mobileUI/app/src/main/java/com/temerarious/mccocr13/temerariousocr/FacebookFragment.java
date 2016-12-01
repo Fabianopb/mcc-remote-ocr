@@ -5,6 +5,7 @@ package com.temerarious.mccocr13.temerariousocr;
  */
 
 import android.content.Intent;
+import android.content.pm.PackageInstaller;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -53,15 +54,13 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 public class FacebookFragment extends Fragment{
 
     private LoginButton loginButton;
-    private Button getUserInterests;
     private boolean postingEnabled = false;
 
     private static final String PERMISSION = "publish_actions";
     private final String PENDING_ACTION_BUNDLE_KEY =
-            "com.example.hellofacebook:PendingAction";
+            "com.temerarious";
 
     private Button postStatusUpdateButton;
-    private Button postPhotoButton;
     private ImageView profilePicImageView;
     private TextView greeting;
     private PendingAction pendingAction = PendingAction.NONE;
@@ -107,7 +106,6 @@ public class FacebookFragment extends Fragment{
 
     private enum PendingAction {
         NONE,
-        POST_PHOTO,
         POST_STATUS_UPDATE
     }
 
@@ -178,6 +176,7 @@ public class FacebookFragment extends Fragment{
             }
 
         });
+
         shareDialog = new ShareDialog(this);
         shareDialog.registerCallback(
                 callbackManager,
@@ -209,9 +208,6 @@ public class FacebookFragment extends Fragment{
         });
 
 
-
-
-
         // Can we present the share dialog for regular links?
         canPresentShareDialog = ShareDialog.canShow(
                 ShareLinkContent.class);
@@ -238,38 +234,11 @@ public class FacebookFragment extends Fragment{
 
                 }
 
-//                GraphRequest request = GraphRequest.newMeRequest(AccessToken.getCurrentAccessToken(),
-//                        new GraphRequest.GraphJSONObjectCallback() {
-//                            @Override
-//                            public void onCompleted(
-//                                    JSONObject object,
-//                                    GraphResponse response) {
-//                                if (object != null) {
-//                                    Log.d("Me Request",object.toString());
-//                                    Toast t = Toast.makeText(getActivity(), object.toString(), Toast.LENGTH_SHORT);
-//                                    t.show();
-//                                }
-//
-//                            }
-//                        });
-//                Bundle parameters = new Bundle();
-//                parameters.putString("fields", "id,name,link,email");
-//                request.setParameters(parameters);
-//                request.executeAsync();
+
             }
         });
 
 
-//        loginButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//                LoginManager.getInstance().logInWithReadPermissions(getActivity(), Arrays.asList("public_profile", "user_friends"));
-//
-//
-//
-//            }
-//        });
         return v;
     }
 
@@ -281,6 +250,10 @@ public class FacebookFragment extends Fragment{
         // reporting.  Do so in the onResume methods of the primary Activities that an app may be
         // launched into.
         AppEventsLogger.activateApp(getActivity());
+        String token = AccessToken.getCurrentAccessToken().getToken();
+        if (token != null) {
+            Toast.makeText(getApplicationContext(), token, Toast.LENGTH_LONG).show();
+        }
 
         updateUI();
     }
@@ -305,6 +278,8 @@ public class FacebookFragment extends Fragment{
 
     private void updateUI() {
         boolean enableButtons = AccessToken.getCurrentAccessToken() != null;
+
+
 
         postStatusUpdateButton.setEnabled(enableButtons || canPresentShareDialog);
 
@@ -372,30 +347,7 @@ public class FacebookFragment extends Fragment{
         }
     }
 
-    private void onClickPostPhoto() {
-        performPublish(PendingAction.POST_PHOTO, canPresentShareDialogWithPhotos);
-    }
 
-    private void postPhoto() {
-        Bitmap image = BitmapFactory.decodeResource(this.getResources(), R.drawable.androidlogo);
-        SharePhoto sharePhoto = new SharePhoto.Builder().setBitmap(image).build();
-        ArrayList<SharePhoto> photos = new ArrayList<>();
-        photos.add(sharePhoto);
-
-        SharePhotoContent sharePhotoContent =
-                new SharePhotoContent.Builder().setPhotos(photos).build();
-        if (canPresentShareDialogWithPhotos) {
-            shareDialog.show(sharePhotoContent);
-        } else if (hasPublishPermission()) {
-            ShareApi.share(sharePhotoContent, shareCallback);
-        } else {
-            pendingAction = PendingAction.POST_PHOTO;
-            // We need to get new permissions, then complete the action when we get called back.
-            LoginManager.getInstance().logInWithPublishPermissions(
-                    this,
-                    Arrays.asList(PERMISSION));
-        }
-    }
 
     private boolean hasPublishPermission() {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
