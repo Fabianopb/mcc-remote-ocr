@@ -37,22 +37,23 @@ FB_NO_PASS = "FB account"
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
     if user:  # User from token
-        return True
+        return user
     else:
         if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
-            return False
+            return userToken
 
         userEntry = db.users.find_one({"username": userToken})
 
         if userEntry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
                 user = userEntry.get('username')
-                return True
+                return user
 
-    return False
+    return None
 
 
 def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
+    print("Token generated for", user)
     s = Serializer(SECRET_KEY, expires_in=expiration)
     return s.dumps({'id': user})
 
@@ -66,7 +67,7 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
 
-    if db.users.find_one({"username": data['id']}) is not None:
+    if db.users.find_one({"username": data['id']}) is not None or data['id'].endswith(FB_SUFFIX):
         return data['id']
     else:
         return None
@@ -93,10 +94,11 @@ def requireAuthentication(auth):
             authDecoded = base64.b64decode(authHeader[6:])
             userToken, password = authDecoded.decode().split(':', 2)
 
-            if (auth(userToken, password)):
-                func(*args, username=userToken)
-            else:
+            authenticatedUser = auth(userToken, password)
+            if authenticatedUser is None:
                 _authenticate(handler)
+            else:
+                func(*args, username=authenticatedUser)
 
         return newFunc
 
@@ -109,9 +111,9 @@ class TokenHandler(tornado.web.RequestHandler):
         print('Token for user: ' + str(username))
 
         token = generate_auth_token(username)
-        print(json.dumps({'token': token.decode('ascii')}))
 
         self.write(json.dumps({'token': token.decode('ascii')}))
+        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
 
 class FBTokenHandler(tornado.web.RequestHandler):
     def get(self):
@@ -131,7 +133,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
             respond_and_log_error(self, 401, receivedData.get('error').get('message'))
             return
 
-        pprint.pprint(json.loads(r.receivedData))
+        pprint.pprint(receivedData)
 
         # Extract user id, use it as a username, concatenated with FB_SUFFIX,
         # so that it does not interfere with locally registered users
@@ -140,16 +142,20 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
+        print('Adding to DB')
         if db.users.find_one({"user_name": username}) is None:
             user = {
-                'user_name': user,
+                'user_name': username,
                 'password': FB_NO_PASS, # FB users cannot be authorised locally
                 'records': []
             }
             db.users.insert_one(user)
 
+        print('Added to DB')
         token = generate_auth_token(username)
 
+
+        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
