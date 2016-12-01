@@ -1,5 +1,6 @@
 package com.temerarious.mccocr13.temerariousocr;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
@@ -79,8 +80,15 @@ public class RecordsActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                // start a new activity with the full text and the full size images
-                // pass the imagesList in the position "position" (imagesListList.get(position)) into the activity
+                String[] imagesArray = new String[imagesListsList.get(position).size()];
+                for (int i = 0; i < imagesArray.length; i++) {
+                    imagesArray[i] = imagesListsList.get(position).get(i);
+                }
+
+                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+                intent.putExtra("ocr_text", recordsList.get(position));
+                intent.putExtra("images_array", imagesArray);
+                startActivity(intent);
 
             }
         });
