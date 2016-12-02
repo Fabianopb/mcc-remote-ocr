@@ -82,10 +82,7 @@ public class OCRActivity extends AppCompatActivity {
         Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.user_default);
         profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
 
-<<<<<<< HEAD
 
-=======
->>>>>>> master
         imgCamera.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -126,14 +123,7 @@ public class OCRActivity extends AppCompatActivity {
             }
         });
 
-        button_save = (Button) findViewById(R.id.button_save);
-        button_save.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                saveToText();
-            }
-        });
-        saveToText();
+
 
     }
 
@@ -237,43 +227,49 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     public void processImage(View view) {
-        final Handler handle = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                progressDoalog.incrementProgressBy(1);
-            }
-        };
-        progressDoalog = new ProgressDialog(OCRActivity.this);
-        progressDoalog.setMax(100);
-        progressDoalog.setMessage("Its loading....");
-        progressDoalog.setTitle("ProgressDialog bar example");
-        progressDoalog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDoalog.show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (progressDoalog.getProgress() <= progressDoalog
-                            .getMax()) {
-                        Thread.sleep(200);
-                        handle.sendMessage(handle.obtainMessage());
-                        if (progressDoalog.getProgress() == progressDoalog
-                                .getMax()) {
-                            progressDoalog.dismiss();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
 
 
         // If mode = Local
         if (selectedMode.equals(type[0])) {
-            String ocrResult = ocrInitializer.runOCR(image);
+            final String ocrResult = ocrInitializer.runOCR(image);
             displayTranslatedText(ocrResult);
+            button_save = (Button) findViewById(R.id.button_save);
+            button_save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    saveToText(ocrResult);
+                }
+            });
+            final Handler handle = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    super.handleMessage(msg);
+                    progressDoalog.incrementProgressBy(1);
+                }
+            };
+            progressDoalog = new ProgressDialog(OCRActivity.this);
+            progressDoalog.setMax(10);
+            progressDoalog.setMessage("OCR processing");
+            progressDoalog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDoalog.show();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        while (progressDoalog.getProgress() <= progressDoalog
+                                .getMax()) {
+                            Thread.sleep(200);
+                            handle.sendMessage(handle.obtainMessage());
+                            if (progressDoalog.getProgress() == progressDoalog
+                                    .getMax()) {
+                                progressDoalog.dismiss();
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
@@ -285,6 +281,8 @@ public class OCRActivity extends AppCompatActivity {
         else if (selectedMode.equals(type[2])) {
 
         }
+
+
 
     }
 
@@ -299,22 +297,23 @@ public class OCRActivity extends AppCompatActivity {
     }
 
 
-    public void saveToText() {
+    public void saveToText(String text) {
         try {
-            File path = Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_DOWNLOADS);
-            File myFile = new File(path, "mytextfile.txt");
-            FileOutputStream fOut = new FileOutputStream(myFile, true);
-            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-            myOutWriter.append("the text I want added to the file");
+            //File myFile = new File("/sdcard/OCRfiles/"+System.currentTimeMillis()+".txt");
+            File myFile = new File(Environment.getExternalStorageDirectory().getPath(), System.currentTimeMillis() + ".txt");
+            myFile.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(myFile);
+            OutputStreamWriter myOutWriter =
+                    new OutputStreamWriter(fOut);
+            myOutWriter.append(text);
             myOutWriter.close();
             fOut.close();
-
-            Toast.makeText(this, "Text file Saved !", Toast.LENGTH_LONG).show();
-        } catch (java.io.IOException e) {
-
-            //do something if an IOException occurs.
-            Toast.makeText(this, "ERROR - Text could't be added", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(),
+                    "Saved",
+                    Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(getBaseContext(), e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
         }
     }
 }

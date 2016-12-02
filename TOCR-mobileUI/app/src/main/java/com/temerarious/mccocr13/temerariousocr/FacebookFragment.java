@@ -4,6 +4,7 @@ package com.temerarious.mccocr13.temerariousocr;
  * Created by ivan on 29.11.16.
  */
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 import android.graphics.Bitmap;
@@ -45,6 +46,7 @@ import com.facebook.share.widget.ShareDialog;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,9 +58,11 @@ public class FacebookFragment extends Fragment{
     private LoginButton loginButton;
     private boolean postingEnabled = false;
 
+
+
+
     private static final String PERMISSION = "publish_actions";
-    private final String PENDING_ACTION_BUNDLE_KEY =
-            "com.temerarious";
+    private final String PENDING_ACTION_BUNDLE_KEY = "com.temerarious";
 
     private Button postStatusUpdateButton;
     private ImageView profilePicImageView;
@@ -250,11 +254,11 @@ public class FacebookFragment extends Fragment{
         // reporting.  Do so in the onResume methods of the primary Activities that an app may be
         // launched into.
         AppEventsLogger.activateApp(getActivity());
-        String token = AccessToken.getCurrentAccessToken().getToken();
+/*        String token = AccessToken.getCurrentAccessToken().getToken();
         if (token != null) {
-            Toast.makeText(getApplicationContext(), token, Toast.LENGTH_LONG).show();
+            Log.d("My log", token);
         }
-
+*/
         updateUI();
     }
 
@@ -293,8 +297,8 @@ public class FacebookFragment extends Fragment{
 
 
         } else {
-            Bitmap icon = BitmapFactory.decodeResource(getContext().getResources(),R.drawable.user_default);
-            profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getContext(), icon, 200, 200, 200, false, false, false, false));
+            Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(),R.drawable.user_default);
+            profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
             greeting.setText(null);
             postingEnabled = false;
             postStatusUpdateButton.setVisibility(View.GONE);
@@ -391,8 +395,7 @@ public class FacebookFragment extends Fragment{
 
 
                 Bitmap resized = Bitmap.createScaledBitmap(result,200,200, true);
-                bmImage.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getContext(),resized,250,200,200, false, false, false, false));
-
+                bmImage.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(),resized,250,200,200, false, false, false, false));
             }
         }
     }

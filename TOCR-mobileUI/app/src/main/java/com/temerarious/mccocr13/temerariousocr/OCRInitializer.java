@@ -1,5 +1,6 @@
 package com.temerarious.mccocr13.temerariousocr;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -21,7 +22,8 @@ public class OCRInitializer {
 
     public OCRActivity activity = null;
     private Context context;
-    //ProgressDialog loading;
+    ProgressDialog loading;
+
 
     OCRInitializer(OCRActivity mActivity, Context mContext) {
         activity = mActivity;
@@ -88,4 +90,5 @@ public class OCRInitializer {
             e.printStackTrace();
         }
     }
+
 }
