@@ -6,7 +6,7 @@ metadata:
     app: backend
     tier: backend
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     # the port that this service should serve on
   - port: 443
@@ -32,14 +32,3 @@ spec:
         image: gcr.io/mcc-2016-g13-p2/backend:v1
         ports:
         - containerPort: 443
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: backend-ingress
-spec:
-  tls:
-  - secretName: backend-secret
-  backend:
-    serviceName: backend-svc
-    servicePort: 443
