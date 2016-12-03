@@ -8,7 +8,7 @@ echo 'Installing dependencies...'
 
 export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
 echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-apt-get update && apt-get -y install google-cloud-sdk kubectl docker.io
+apt-get update && apt-get -y install google-cloud-sdk kubectl docker.io make
 
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
@@ -19,7 +19,7 @@ else
 fi
 
 
-echo 'Setting up Docker ans building container...'
+echo 'Setting up Docker and building container...'
 
 groupadd docker
 gpasswd -a ${USER} docker
@@ -42,4 +42,5 @@ gcloud config set compute/zone $GCLOUD_ZONE
 gcloud container clusters create backend
 gcloud config set container/use_client_certificate True
 gcloud container clusters get-credentials backend
+make -C cluster/sidecar/ add-replica
 kubectl create -f cluster/backend.yaml
