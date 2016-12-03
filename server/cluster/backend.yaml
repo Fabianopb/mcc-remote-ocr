@@ -18,7 +18,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: backend-depl
+  name: backend-dpl
 spec:
   replicas: 2
   template:
@@ -29,6 +29,6 @@ spec:
     spec:
       containers:
       - name: backend
-        image: gcr.io/mcc-2016-g13-p2/backend:v1
+        image: eu.gcr.io/mcc-2016-g13-p2/backend:v1
         ports:
         - containerPort: 443

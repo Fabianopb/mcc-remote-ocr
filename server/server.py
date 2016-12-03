@@ -483,7 +483,7 @@ if __name__ == '__main__':
     # Set up logging
     tornado.options.parse_command_line()
 
-    client = MongoClient('mongodb://mongo:27017')
+    client = MongoClient('mongodb://mongo-1:27017')
     if client is None:
         logging.debug("Connection to database failed")
     db = client.userdata
