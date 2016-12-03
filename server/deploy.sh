@@ -22,9 +22,6 @@ fi
 
 echo 'Setting up Docker and building container...'
 
-groupadd docker
-gpasswd -a ${USER} docker
-sudo -u ${USER} newgrp docker
 docker build -t eu.gcr.io/$PROJECT_ID/backend:v1 .
 
 RESULT=$?
