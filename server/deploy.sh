@@ -67,5 +67,7 @@ else
     exit $RESULT
 fi
 
-SLEEP 60
+echo 'Waiting 2 minutes for cluster to initialize...'
+sleep 120
 kubectl get services
+echo 'Done'
