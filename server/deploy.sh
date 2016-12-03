@@ -22,6 +22,8 @@ fi
 
 echo 'Setting up Docker and building container...'
 
+gpasswd -a ${USER} docker
+newgrp docker
 docker build -t eu.gcr.io/$PROJECT_ID/backend:v1 .
 
 RESULT=$?
@@ -64,3 +66,6 @@ else
     (>&2 echo 'ERROR: Cluster could not be set up.')
     exit $RESULT
 fi
+
+SLEEP 60
+kubectl get services
