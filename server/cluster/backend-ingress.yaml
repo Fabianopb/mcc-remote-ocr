@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: backend-ingress
 spec:
+  tls:
+  - secretName: testsecret
   backend:
     serviceName: backend-svc
     servicePort: 443
