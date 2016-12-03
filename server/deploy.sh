@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 PROJECT_ID="mcc-2016-g13-p2"
+GCLOUD_ZONE="europe-west1-c"
 
 
 echo 'Installing dependencies...'
@@ -34,6 +35,8 @@ else
 fi
 
 
+chown -R ${USER} ~/.config
 gcloud auth activate-service-account tt-822@mcc-2016-g13-p2.iam.gserviceaccount.com --key-file=./key/mcc-2016-g13-p2-94921abc7259.json
-
 gcloud docker -- push gcr.io/$PROJECT_ID/backend:v1
+gcloud config set compute/zone $GCLOUD_ZONE
+gcloud container clusters create backend

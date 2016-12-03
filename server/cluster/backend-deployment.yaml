@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: backend-depl
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: backend
+        tier: backend
+    spec:
+      containers:
+      - name: backend
+        image: gcr.io/mcc-2016-g13-p2/backend:v1
+        ports:
+        - containerPort: 443
