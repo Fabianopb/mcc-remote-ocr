@@ -70,4 +70,4 @@ fi
 echo 'Waiting 2 minutes for cluster to initialize...'
 sleep 120
 kubectl get services
-echo 'Done'
+echo 'Done.'
