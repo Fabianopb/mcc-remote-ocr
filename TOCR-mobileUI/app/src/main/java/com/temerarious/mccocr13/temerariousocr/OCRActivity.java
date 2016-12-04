@@ -111,7 +111,6 @@ public class OCRActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedMode = type[position];
-                Toast.makeText(getBaseContext(), "Selected mode = " + selectedMode, Toast.LENGTH_SHORT).show();
             }
 
             @Override
