@@ -27,12 +27,14 @@ import pprint
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
 
+DB_CONNECT_STRING = 'mongodb://mongo-1:27017'
+
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
 
 APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
-FB_SUFFIX = "@facebook.com"
-FB_NO_PASS = "FB account"
+FB_SUFFIX = '@facebook.com'
+FB_NO_PASS = 'FB account'
 
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
@@ -42,7 +44,7 @@ def verify_password(userToken, password):
         if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
             return userToken
 
-        userEntry = db.users.find_one({"username": userToken})
+        userEntry = db.users.find_one({'username': userToken})
 
         if userEntry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
@@ -53,7 +55,7 @@ def verify_password(userToken, password):
 
 
 def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
-    print("Token generated for", user)
+    print('Token generated for', user)
     s = Serializer(SECRET_KEY, expires_in=expiration)
     return s.dumps({'id': user})
 
@@ -67,7 +69,7 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
 
-    if db.users.find_one({"username": data['id']}) is not None or data['id'].endswith(FB_SUFFIX):
+    if db.users.find_one({'username': data['id']}) is not None or data['id'].endswith(FB_SUFFIX):
         return data['id']
     else:
         return None
@@ -143,9 +145,9 @@ class FBTokenHandler(tornado.web.RequestHandler):
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
         print('Adding to DB')
-        if db.users.find_one({"user_name": username}) is None:
+        if db.users.find_one({'username': username}) is None:
             user = {
-                'user_name': username,
+                'username': username,
                 'password': FB_NO_PASS, # FB users cannot be authorised locally
                 'records': []
             }
@@ -209,7 +211,7 @@ class AddTestuserHandler(RequestHandler):
 
 class GetTestuserHandler(RequestHandler):
     def get(self):
-        user = db.users.find_one({"username": 'testuser'})
+        user = db.users.find_one({'username': 'testuser'})
         self.write(user.get['username'])
 
 
@@ -262,7 +264,7 @@ class GetImageHandler(RequestHandler):
             respond_and_log_error(self, 404, 'No such image in database')
             return
 
-        self.set_header("Content-type", image.content_type)
+        self.set_header('Content-type', image.content_type)
         self.write(image.read())
 
 
@@ -361,7 +363,7 @@ class UploadImageHandler(RequestHandler):
             logging.debug(record)
             # TODO: Error handling and cleanup if database update fails
             # Update user document in DB
-            db.users.update_one({"username": username}, {'$push': {'records': record}})
+            db.users.update_one({'username': username}, {'$push': {'records': record}})
             # Delete transaction document from DB
             db.transactions.delete_one({'_id': uid})
 
@@ -441,7 +443,7 @@ def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
 # Logs and responds with the given error code and message
 def respond_and_log_error(request, error_code, msg):
     request.set_status(error_code)
-    logging.debug("Error response: " + str(msg))
+    logging.debug('Error response: ' + str(msg))
     request.finish(msg)
     return
 
@@ -483,9 +485,9 @@ if __name__ == '__main__':
     # Set up logging
     tornado.options.parse_command_line()
 
-    client = MongoClient('mongodb://mongo-1:27017')
+    client = MongoClient(DB_CONNECT_STRING)
     if client is None:
-        logging.debug("Connection to database failed")
+        logging.debug('Connection to database failed')
     db = client.userdata
     fs = GridFS(db)
 
@@ -493,8 +495,8 @@ if __name__ == '__main__':
     http_server.listen(80)
 
     https_server = tornado.httpserver.HTTPServer(app, ssl_options={
-        "certfile": "cert/nopass_cert.pem",
-        "keyfile": "cert/nopass_key.pem",
+        'certfile': 'cert/nopass_cert.pem',
+        'keyfile': 'cert/nopass_key.pem',
     })
     https_server.listen(443)
     tornado.ioloop.IOLoop.instance().start()
