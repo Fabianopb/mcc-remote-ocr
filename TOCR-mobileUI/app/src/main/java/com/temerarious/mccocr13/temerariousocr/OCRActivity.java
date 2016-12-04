@@ -59,7 +59,6 @@ public class OCRActivity extends AppCompatActivity {
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     private Bitmap image;
-    private ImageView img;
     private TextView imgSelectorStatus;
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
@@ -97,8 +96,6 @@ public class OCRActivity extends AppCompatActivity {
 
         imgSelectorStatus = (TextView) findViewById(R.id.img_selector_status);
         imgSelectorStatus.setText(getString(R.string.status_no_image));
-
-        img = (ImageView) findViewById(R.id.imageView);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -173,8 +170,6 @@ public class OCRActivity extends AppCompatActivity {
             imageName.clear();
         }
 
-        img.setImageBitmap(thumbnail);
-
         imageStream.add(stream.toByteArray());
         imageName.add(System.currentTimeMillis() + ".jpg");
 
@@ -222,12 +217,13 @@ public class OCRActivity extends AppCompatActivity {
         imageName.add(System.currentTimeMillis() + ".jpg");
 
         image = bm;
-        img.setImageBitmap(bm);
 
     }
 
     public void previewImage(View view) {
-        Toast.makeText(this, getString(R.string.live_preview_link), Toast.LENGTH_SHORT).show();
+        if (image == null) {
+            Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void processImage(View view) {

@@ -110,12 +110,4 @@
         android:id="@+id/OCRTextView"
         android:textSize="18sp" />
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:id="@+id/imageView"
-        android:src="@drawable/test_image" />
-
-
 </LinearLayout>
