@@ -36,12 +36,13 @@ APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
 FB_SUFFIX = '@facebook.com'
 FB_NO_PASS = 'FB account'
 
+
 def verify_password(userToken, password):
     user = verify_auth_token(userToken)
     if user:  # User from token
         return user
     else:
-        if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
+        if userToken.endswith(FB_SUFFIX):  # FB account; cannot be authorised this way
             return userToken
 
         userEntry = db.users.find_one({'username': userToken})
@@ -115,7 +116,8 @@ class TokenHandler(tornado.web.RequestHandler):
         token = generate_auth_token(username)
 
         self.write(json.dumps({'token': token.decode('ascii')}))
-        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+
 
 class FBTokenHandler(tornado.web.RequestHandler):
     def get(self):
@@ -123,9 +125,9 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
         # Verify userToken by FB
         r = requests.get('https://graph.facebook.com/debug_token?input_token='
-                + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
-        
-        #if r.status_code != requests.codes.ok:
+                         + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
+
+        # if r.status_code != requests.codes.ok:
         if r.status_code != 200:
             respond_and_log_error(self, 401, 'Authentication failed')
             return
@@ -148,7 +150,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
         if db.users.find_one({'username': username}) is None:
             user = {
                 'username': username,
-                'password': FB_NO_PASS, # FB users cannot be authorised locally
+                'password': FB_NO_PASS,  # FB users cannot be authorised locally
                 'records': []
             }
             db.users.insert_one(user)
@@ -156,8 +158,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
         print('Added to DB')
         token = generate_auth_token(username)
 
-
-        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
