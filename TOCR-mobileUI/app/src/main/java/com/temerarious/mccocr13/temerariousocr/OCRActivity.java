@@ -226,8 +226,11 @@ public class OCRActivity extends AppCompatActivity {
 
     }
 
-    public void processImage(View view) {
+    public void previewImage(View view) {
+        Toast.makeText(this, getString(R.string.live_preview_link), Toast.LENGTH_SHORT).show();
+    }
 
+    public void processImage(View view) {
 
         // If mode = Local
         if (selectedMode.equals(type[0])) {
@@ -281,8 +284,6 @@ public class OCRActivity extends AppCompatActivity {
         else if (selectedMode.equals(type[2])) {
 
         }
-
-
 
     }
 
