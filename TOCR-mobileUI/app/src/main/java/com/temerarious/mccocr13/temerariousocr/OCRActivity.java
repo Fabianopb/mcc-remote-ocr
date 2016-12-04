@@ -223,6 +223,13 @@ public class OCRActivity extends AppCompatActivity {
     public void previewImage(View view) {
         if (image == null) {
             Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
+        } else {
+            Intent intent = new Intent(getApplicationContext(), PreviewActivity.class);
+            intent.putExtra("number of images", imageStream.size());
+            for (int i = 0; i < imageStream.size(); i++) {
+                intent.putExtra("byte-array-" + String.valueOf(i), imageStream.get(i));
+            }
+            startActivity(intent);
         }
     }
 
