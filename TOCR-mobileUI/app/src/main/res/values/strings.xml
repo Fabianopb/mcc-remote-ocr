@@ -6,7 +6,12 @@
     <string name="log_in">Login</string>
     <string name="password">Password</string>
     <string name="wrong_pass">Wrong Password</string>
-    <string name="select_mode">Select mode</string>
+    <string name="select_mode">Select mode:</string>
+    <string name="select_source">Select source:</string>
+    <string name="status_no_image">No image selected, please choose from the gallery or take a picture with the camera using the icons above.</string>
+    <string name="status_img_camera">You have taken a picture with the camera. Ready to translate?</string>
+    <string name="status_img_gallery_1">You have selected</string>
+    <string name="status_img_gallery_2">image(s) from the gallery. Ready to translate?</string>
     <string name="test_ocr">TEST OCR</string>
     <string name="show_records">Show records</string>
     <string name="facebook_app_id">349946252046985</string>

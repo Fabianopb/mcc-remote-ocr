@@ -60,9 +60,10 @@ public class OCRActivity extends AppCompatActivity {
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
     private Bitmap image;
     private ImageView img;
+    private TextView imgSelectorStatus;
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
-    ImageView imgCamera, imgGalery, profilePicImageView;
+    ImageView imgCamera, imgGalery;
     ProgressDialog progressDoalog;
     Button button_save;
 
@@ -78,10 +79,6 @@ public class OCRActivity extends AppCompatActivity {
 
         imgCamera = (ImageView) findViewById(R.id.camera);
         imgGalery = (ImageView) findViewById(R.id.gallery);
-        profilePicImageView = (ImageView) findViewById(R.id.profilePicture);
-        Bitmap icon = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.user_default);
-        profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
-
 
         imgCamera.setOnClickListener(new View.OnClickListener() {
 
@@ -90,7 +87,6 @@ public class OCRActivity extends AppCompatActivity {
                 select_from_camera();
             }
         });
-
         imgGalery.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -99,10 +95,10 @@ public class OCRActivity extends AppCompatActivity {
             }
         });
 
-        //init image
-        image = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
-        img = (ImageView) findViewById(R.id.imageView);
+        imgSelectorStatus = (TextView) findViewById(R.id.img_selector_status);
+        imgSelectorStatus.setText(getString(R.string.status_no_image));
 
+        img = (ImageView) findViewById(R.id.imageView);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -145,8 +141,9 @@ public class OCRActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == SELECT_FILE)
+            if (requestCode == SELECT_FILE) {
                 onSelectFromGalleryResult(data);
+            }
             else if (requestCode == REQUEST_CAMERA)
                 try {
                     onCaptureImageResult(data);
@@ -163,6 +160,8 @@ public class OCRActivity extends AppCompatActivity {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 0, bytes);
         img.setImageBitmap(bitmap);*/
+
+        imgSelectorStatus.setText(getString(R.string.status_img_camera));
 
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
         //thumbnail = Bitmap.createScaledBitmap(thumbnail, 500, 500, true);
@@ -200,6 +199,8 @@ public class OCRActivity extends AppCompatActivity {
 
     @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
+
+        imgSelectorStatus.setText(getString(R.string.status_img_gallery_1) + " 1 " + getString(R.string.status_img_gallery_2));
 
         Bitmap bm = null;
         if (data != null) {
