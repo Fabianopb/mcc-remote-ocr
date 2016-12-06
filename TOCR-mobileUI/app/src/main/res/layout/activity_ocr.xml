@@ -81,6 +81,7 @@
         android:background="@drawable/button"
         android:onClick="processImage" />
 
+
     <Button
         android:layout_height="wrap_content"
         android:layout_width="140dp"
