@@ -6,6 +6,8 @@
     <string name="log_in">Login</string>
     <string name="password">Password</string>
     <string name="wrong_pass">Wrong Password</string>
+    <string name="authenticating">Authenticating...</string>
+    <string name="authentication_failed">Authentication failed</string>
     <string name="select_mode">Select mode:</string>
     <string name="select_source">Select source:</string>
     <string name="status_no_image">No image selected, please choose from the gallery or take a picture using the icons above.</string>

@@ -58,22 +58,22 @@ public class MainActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 username = etLogUsername.getText().toString();
                 password = etLogPassword.getText().toString();
 
+                BasicAuthentication basicAuthentication = new BasicAuthentication(MainActivity.this, MainActivity.this);
+                basicAuthentication.execute(username, password);
 
-                if (username.equals("test1") && (password.equals("secret1")) || (username.equals("test2") && (password.equals("secret2"))
+                /*if (username.equals("test1") && (password.equals("secret1")) || (username.equals("test2") && (password.equals("secret2"))
                         || (username.equals("test3") && (password.equals("secret3"))))) {
                     Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
                     startActivity(intent);
                 }
 
-                // send username:password to database and check is it correct
-                    /*LoginBW loginBW = new LoginBW(MainActivity.this, getApplicationContext());
-                    loginBW.execute(username, password);*/
                 else {
                     Toast.makeText(getApplicationContext(), R.string.wrong_pass, Toast.LENGTH_SHORT).show();
-                }
+                }*/
             }
 
         });
