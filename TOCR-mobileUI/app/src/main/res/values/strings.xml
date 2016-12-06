@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Temerarious OCR</string>
     <string name="login_title">Welcome</string>
-    <string name="login_info">Please Log In</string>
+    <string name="login_info">Log In with your credentials or Facebook account</string>
     <string name="username">Username</string>
     <string name="log_in">Login</string>
     <string name="password">Password</string>
