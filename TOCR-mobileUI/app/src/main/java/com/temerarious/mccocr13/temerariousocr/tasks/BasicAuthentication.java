@@ -1,18 +1,22 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.tasks;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,13 +30,17 @@ import java.security.cert.CertificateException;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
-class PrepareRemote extends AsyncTask<String,Void,String> {
+/**
+ * Created by fabiano.brito on 06/12/2016.
+ */
 
-    public OCRActivity source = null;
+public class BasicAuthentication extends AsyncTask<String,Void,String> {
+
+    public MainActivity source = null;
     private Context context;
-    //ProgressDialog loading;
+    ProgressDialog loading;
 
-    PrepareRemote(OCRActivity fl, Context ctx) {
+    public BasicAuthentication(MainActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }
@@ -43,8 +51,8 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String prepare_remote_url = "https://" + server_ip + "/ocr/";
-        String images_total = params[0];
+        String prepare_remote_url = "https://" + server_ip + "/token";
+        String credentials = Credentials.basic(params[0], params[1]);
 
         try {
 
@@ -57,17 +65,15 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
                         }
                     });
 
-            RequestBody requestBody = new MultipartBuilder()
-                    .type(MultipartBuilder.FORM)
-                    .addFormDataPart("images_total", images_total)
-                    .build();
-
             Request request = new Request.Builder()
                     .url(prepare_remote_url)
-                    .post(requestBody)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
 
 
@@ -78,28 +84,35 @@ class PrepareRemote extends AsyncTask<String,Void,String> {
     }
 
     @Override
-    protected void onPreExecute() {}
+    protected void onPreExecute() {
+        loading = ProgressDialog.show(context, source.getResources().getString(R.string.authenticating), null, true, true);
+    }
 
     @Override
     protected void onPostExecute(String result) {
-        if(result != null) {
-            try {
+        loading.dismiss();
+        try {
 
-                JSONObject jsonObj = new JSONObject(result);
-                Toast.makeText(context, jsonObj.getString("message"), Toast.LENGTH_SHORT).show();
-
-                String uid = jsonObj.getString("uid");
-                String next_seq = jsonObj.getString("next_seq");
-
-                UploadImages uploadImages = new UploadImages(source, context);
-                uploadImages.execute(uid, next_seq);
-
-            } catch (JSONException e) {
-                Log.e("Parsing error", e.toString());
+            if(result == null) {
+                throw new IOException("Response was null");
             }
-        } else {
-            Toast.makeText(context, R.string.remote_failed, Toast.LENGTH_SHORT).show();
+
+            JSONObject jsonObj = new JSONObject(result);
+            String token = jsonObj.getString("token");
+
+            SharedPreferences sharedPref = source.getSharedPreferences("sessionData", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("token", token);
+            editor.apply();
+
+            Intent intent = new Intent(context, OCRActivity.class);
+            context.startActivity(intent);
+
+        } catch (JSONException | IOException e) {
+            Log.e("Parsing error", e.toString());
+            Toast.makeText(context, R.string.authentication_failed, Toast.LENGTH_SHORT).show();
         }
+
     }
 
     @Override

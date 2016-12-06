@@ -1,4 +1,4 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +9,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import com.temerarious.mccocr13.temerariousocr.tasks.FetchRecords;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.RecordsListAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;

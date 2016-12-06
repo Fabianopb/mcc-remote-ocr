@@ -1,12 +1,10 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.fragments;
 
 /**
  * Created by ivan on 29.11.16.
  */
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInstaller;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -29,8 +27,6 @@ import com.facebook.FacebookAuthorizationException;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
@@ -40,15 +36,13 @@ import com.facebook.login.widget.LoginButton;
 import com.facebook.share.ShareApi;
 import com.facebook.share.Sharer;
 import com.facebook.share.model.ShareLinkContent;
-import com.facebook.share.model.SharePhoto;
 import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareDialog;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
+import com.temerarious.mccocr13.temerariousocr.helpers.ImageHelper;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static com.facebook.FacebookSdk.getApplicationContext;

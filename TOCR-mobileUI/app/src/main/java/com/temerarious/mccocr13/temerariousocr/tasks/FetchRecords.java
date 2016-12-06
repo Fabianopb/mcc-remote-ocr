@@ -1,4 +1,4 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.tasks;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -8,11 +8,12 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
+import com.temerarious.mccocr13.temerariousocr.activities.RecordsActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,13 +32,13 @@ import javax.net.ssl.SSLSession;
  * Created by fabiano.brito on 30/11/2016.
  */
 
-class FetchRecords extends AsyncTask<String,Void,String> {
+public class FetchRecords extends AsyncTask<String,Void,String> {
 
     public RecordsActivity source = null;
     private Context context;
     private ProgressDialog loading;
 
-    FetchRecords(RecordsActivity fl, Context ctx) {
+    public FetchRecords(RecordsActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }

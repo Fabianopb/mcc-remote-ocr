@@ -1,4 +1,4 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.helpers;
 
 /**
  * Created by ivan on 29.11.16.

@@ -1,28 +1,16 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.activities;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.StrictMode;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,31 +18,20 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.Profile;
-import com.googlecode.tesseract.android.TessBaseAPI;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.temerarious.mccocr13.temerariousocr.helpers.OCRInitializer;
+import com.temerarious.mccocr13.temerariousocr.tasks.PrepareRemote;
+import com.temerarious.mccocr13.temerariousocr.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Map;
-
-import static android.content.Intent.EXTRA_ALLOW_MULTIPLE;
-import static java.security.AccessController.getContext;
 
 
 public class OCRActivity extends AppCompatActivity {
@@ -71,7 +48,7 @@ public class OCRActivity extends AppCompatActivity {
     Button button_save;
 
     public ArrayList<String> imageName = new ArrayList<String>();
-    public ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
+    public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,14 +201,10 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     public void previewImage(View view) {
-        if (imageStream.get(0) == null) {
+        if (imageStream.size() == 0) {
             Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
         } else {
             Intent intent = new Intent(getApplicationContext(), PreviewActivity.class);
-            intent.putExtra("number of images", imageStream.size());
-            for (int i = 0; i < imageStream.size(); i++) {
-                intent.putExtra("byte-array-" + String.valueOf(i), imageStream.get(i));
-            }
             startActivity(intent);
         }
     }

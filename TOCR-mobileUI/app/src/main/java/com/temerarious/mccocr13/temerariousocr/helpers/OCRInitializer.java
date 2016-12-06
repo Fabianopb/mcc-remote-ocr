@@ -1,4 +1,4 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.helpers;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -6,6 +6,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,7 +26,7 @@ public class OCRInitializer {
     ProgressDialog loading;
 
 
-    OCRInitializer(OCRActivity mActivity, Context mContext) {
+    public OCRInitializer(OCRActivity mActivity, Context mContext) {
         activity = mActivity;
         context = mContext;
     }
