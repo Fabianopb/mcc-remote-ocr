@@ -27,12 +27,6 @@ import com.facebook.FacebookSdk;
 
 public class MainActivity extends AppCompatActivity {
 
-    // declaration of variables for fragment ets
-    EditText etLogUsername, etLogPassword;
-
-    // declaration of strings for login stage
-    String username, password;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,34 +43,18 @@ public class MainActivity extends AppCompatActivity {
                     .add(R.id.fragment_container, fragment)
                     .commit();
         }
-        etLogUsername = (EditText) findViewById(R.id.etLogUsername);
-        etLogPassword = (EditText) findViewById(R.id.etLogPassword);
 
+    }
 
-        // Login button
-        Button btnLogin = (Button) findViewById(R.id.login);
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+    public void startLogin(View view) {
+        EditText etLogUsername = (EditText) findViewById(R.id.etLogUsername);
+        EditText etLogPassword = (EditText) findViewById(R.id.etLogPassword);
 
-                username = etLogUsername.getText().toString();
-                password = etLogPassword.getText().toString();
+        String username = etLogUsername.getText().toString();
+        String password = etLogPassword.getText().toString();
 
-                BasicAuthentication basicAuthentication = new BasicAuthentication(MainActivity.this, MainActivity.this);
-                basicAuthentication.execute(username, password);
-
-                /*if (username.equals("test1") && (password.equals("secret1")) || (username.equals("test2") && (password.equals("secret2"))
-                        || (username.equals("test3") && (password.equals("secret3"))))) {
-                    Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
-                    startActivity(intent);
-                }
-
-                else {
-                    Toast.makeText(getApplicationContext(), R.string.wrong_pass, Toast.LENGTH_SHORT).show();
-                }*/
-            }
-
-        });
+        BasicAuthentication basicAuthentication = new BasicAuthentication(MainActivity.this, MainActivity.this);
+        basicAuthentication.execute(username, password);
     }
 
 

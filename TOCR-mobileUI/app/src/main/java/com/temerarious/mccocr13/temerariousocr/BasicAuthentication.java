@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -69,6 +70,9 @@ class BasicAuthentication extends AsyncTask<String,Void,String> {
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
 
 
@@ -86,26 +90,28 @@ class BasicAuthentication extends AsyncTask<String,Void,String> {
     @Override
     protected void onPostExecute(String result) {
         loading.dismiss();
-        if(result != null) {
-            try {
+        try {
 
-                JSONObject jsonObj = new JSONObject(result);
-                String token = jsonObj.getString("token");
-
-                SharedPreferences sharedPref = source.getSharedPreferences("sessionData", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString("token", token);
-                editor.apply();
-
-                Intent intent = new Intent(context, OCRActivity.class);
-                context.startActivity(intent);
-
-            } catch (JSONException e) {
-                Log.e("Parsing error", e.toString());
+            if(result == null) {
+                throw new IOException("Response was null");
             }
-        } else {
+
+            JSONObject jsonObj = new JSONObject(result);
+            String token = jsonObj.getString("token");
+
+            SharedPreferences sharedPref = source.getSharedPreferences("sessionData", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("token", token);
+            editor.apply();
+
+            Intent intent = new Intent(context, OCRActivity.class);
+            context.startActivity(intent);
+
+        } catch (JSONException | IOException e) {
+            Log.e("Parsing error", e.toString());
             Toast.makeText(context, R.string.authentication_failed, Toast.LENGTH_SHORT).show();
         }
+
     }
 
     @Override
