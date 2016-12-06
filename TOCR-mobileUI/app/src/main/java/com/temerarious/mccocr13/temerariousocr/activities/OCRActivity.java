@@ -29,6 +29,7 @@ import android.widget.Toast;
 import com.temerarious.mccocr13.temerariousocr.R;
 import com.temerarious.mccocr13.temerariousocr.helpers.OCRInitializer;
 import com.temerarious.mccocr13.temerariousocr.tasks.PrepareRemote;
+import com.temerarious.mccocr13.temerariousocr.tasks.RunLocalOCR;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -42,15 +43,13 @@ import java.util.ArrayList;
 
 public class OCRActivity extends AppCompatActivity {
 
-    private OCRInitializer ocrInitializer = new OCRInitializer(this, this);
+    public OCRInitializer ocrInitializer = new OCRInitializer(this, this);
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
-    private Bitmap image;
     private TextView imgSelectorStatus;
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
-    ProgressDialog progressDoalog;
     Button button_save;
     Uri imageUri;
     int i;
@@ -133,6 +132,11 @@ public class OCRActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (imageStream.size() > 0) {
+            imageStream.clear();
+            imageName.clear();
+        }
+
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == SELECT_FILE) {
                 onSelectFromGalleryResult(data);
@@ -156,50 +160,31 @@ public class OCRActivity extends AppCompatActivity {
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             options.inSampleSize = 2;
             options.inScreenDensity = DisplayMetrics.DENSITY_LOW;
-            Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
-            image=bitmap;
+            Bitmap bm = BitmapFactory.decodeStream(is, null, options);
+
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            //bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+            bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
             imageStream.add(stream.toByteArray());
             imageName.add(System.currentTimeMillis() + ".jpg");
 
-            /*if (imageStream.size() > 0) {
-                imageStream.clear();
-                imageName.clear();
-            }*/
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+            imgSelectorStatus.setText(getString(R.string.status_img_camera));
 
-        imgSelectorStatus.setText(getString(R.string.status_img_camera));
+            File file = new File(Environment.getExternalStorageDirectory(), imageName.get(0));
 
-        /*Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        //thumbnail = Bitmap.createScaledBitmap(thumbnail, 500, 500, true);
-        image = thumbnail;
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, stream);*/
-
-        File file = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
-
-        FileOutputStream fo;
-        try {
+            FileOutputStream fo;
             file.createNewFile();
             fo = new FileOutputStream(file);
             fo.write(imageStream.get(0));
             fo.close();
-        } catch (IOException e) {
+
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
     private void onSelectFromGalleryResult(Intent data) {
-
-        if (imageStream.size() > 0) {
-            imageStream.clear();
-            imageName.clear();
-        }
 
         try {
             if(data.getData()!=null){
@@ -239,8 +224,11 @@ public class OCRActivity extends AppCompatActivity {
 
         // If mode = Local
         if (selectedMode.equals(type[0])) {
-            final String ocrResult = ocrInitializer.runOCR(image);
-            displayTranslatedText(ocrResult);
+
+            RunLocalOCR runLocalOCR = new RunLocalOCR(this, this);
+            runLocalOCR.execute();
+
+            /*
             button_save = (Button) findViewById(R.id.button_save);
             button_save.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -252,32 +240,32 @@ public class OCRActivity extends AppCompatActivity {
                 @Override
                 public void handleMessage(Message msg) {
                     super.handleMessage(msg);
-                    progressDoalog.incrementProgressBy(1);
+                    progressDialog.incrementProgressBy(1);
                 }
             };
-            progressDoalog = new ProgressDialog(OCRActivity.this);
-            progressDoalog.setMax(10);
-            progressDoalog.setMessage("OCR processing");
-            progressDoalog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDoalog.show();
+            progressDialog = new ProgressDialog(OCRActivity.this);
+            progressDialog.setMax(10);
+            progressDialog.setMessage("OCR processing");
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.show();
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        while (progressDoalog.getProgress() <= progressDoalog
+                        while (progressDialog.getProgress() <= progressDialog
                                 .getMax()) {
                             Thread.sleep(200);
                             handle.sendMessage(handle.obtainMessage());
-                            if (progressDoalog.getProgress() == progressDoalog
+                            if (progressDialog.getProgress() == progressDialog
                                     .getMax()) {
-                                progressDoalog.dismiss();
+                                progressDialog.dismiss();
                             }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            }).start();*/
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
@@ -298,8 +286,12 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     public void displayTranslatedText(String result) {
-        TextView ocrTextView = (TextView) findViewById(R.id.OCRTextView);
-        ocrTextView.setText(result);
+        Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
+        intent.putExtra("ocr-result", result);
+        startActivity(intent);
+
+        //TextView ocrTextView = (TextView) findViewById(R.id.OCRTextView);
+        //ocrTextView.setText(result);
     }
 
 

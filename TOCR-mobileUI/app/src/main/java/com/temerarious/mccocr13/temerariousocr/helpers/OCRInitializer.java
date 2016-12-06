@@ -4,8 +4,11 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.widget.ImageView;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
+import com.temerarious.mccocr13.temerariousocr.R;
 import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 
 import java.io.File;
@@ -23,8 +26,6 @@ public class OCRInitializer {
 
     public OCRActivity activity = null;
     private Context context;
-    ProgressDialog loading;
-
 
     public OCRInitializer(OCRActivity mActivity, Context mContext) {
         activity = mActivity;
@@ -45,9 +46,11 @@ public class OCRInitializer {
         mTess.init(datapath, language);
     }
 
-    public String runOCR(Bitmap image) {
-        mTess.setImage(image);
-        return mTess.getUTF8Text();
+    public String runOCR(byte[] blob) {
+        Bitmap bitmap = BitmapFactory.decodeByteArray(blob, 0, blob.length);
+        mTess.setImage(bitmap);
+        String result = mTess.getUTF8Text();
+        return result;
     }
 
     private void checkFile(File dir) {
