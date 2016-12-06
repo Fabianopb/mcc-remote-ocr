@@ -45,6 +45,7 @@ fs = None
 
 
 def verify_password(user_token, password):
+    # TODO: Safe db operations
     user = verify_auth_token(user_token)
     if user:  # User from token
         return user
@@ -52,7 +53,7 @@ def verify_password(user_token, password):
         if user_token.endswith(FB_SUFFIX):  # FB account; cannot be authorised this way
             return user_token
 
-        user_entry = yield db_safe.find_user(db, user_token)
+        user_entry = db.users.find_one({"username": user_token})
 
         if user_entry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == user_entry.get('password'):
@@ -68,8 +69,8 @@ def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
     return s.dumps({'id': user})
 
 
-@gen.coroutine
 def verify_auth_token(token):
+    # TODO: Safe db operations
     s = Serializer(SECRET_KEY)
     try:
         data = s.loads(token)
@@ -78,7 +79,9 @@ def verify_auth_token(token):
     except BadSignature:
         return None  # invalid token
     username = data['id']
-    user = yield db_safe.find_user(db, username)
+
+    user = db.users.find_one({"username": data['id']})
+    #user = db_safe.find_user(db, username)
     if user is not None or username.endswith(FB_SUFFIX):
         return username
     else:
@@ -238,10 +241,10 @@ class GetRecordsHandler(RequestHandler):
 
     @gen.coroutine
     def get(self):
+        username = 'test'
         logging.debug(self.request)
 
         # TODO: Implement authentication
-        username = 'test'
         try:
             amount = int(self.get_query_argument('amount'))
         except tornado.web.MissingArgumentError:
