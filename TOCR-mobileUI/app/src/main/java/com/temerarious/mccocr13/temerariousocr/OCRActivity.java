@@ -2,6 +2,7 @@ package com.temerarious.mccocr13.temerariousocr;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,6 +22,9 @@ import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -115,8 +119,6 @@ public class OCRActivity extends AppCompatActivity {
             }
         });
 
-
-
     }
 
     public void select_from_galery() {
@@ -181,8 +183,6 @@ public class OCRActivity extends AppCompatActivity {
             fo = new FileOutputStream(file);
             fo.write(imageStream.get(0));
             fo.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -191,37 +191,40 @@ public class OCRActivity extends AppCompatActivity {
     }
 
 
-    @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
-
-        imgSelectorStatus.setText(getString(R.string.status_img_gallery_1) + " 1 " + getString(R.string.status_img_gallery_2));
-
-        Bitmap bm = null;
-        if (data != null) {
-            try {
-                bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
 
         if (imageStream.size() > 0) {
             imageStream.clear();
             imageName.clear();
         }
 
-        imageStream.add(stream.toByteArray());
-        imageName.add(System.currentTimeMillis() + ".jpg");
+        try {
+            if(data.getData()!=null){
+                Bitmap bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                imageStream.add(stream.toByteArray());
+                imageName.add(System.currentTimeMillis() + ".jpg");
+            } else if(data.getClipData() != null){
+                ClipData clipData = data.getClipData();
+                for(int i = 0; i < clipData.getItemCount(); i++){
+                    Bitmap bm = MediaStore.Images.Media.getBitmap(this.getContentResolver(), clipData.getItemAt(i).getUri());
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bm.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+                    imageStream.add(stream.toByteArray());
+                    imageName.add(System.currentTimeMillis() + ".jpg");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        image = bm;
+        imgSelectorStatus.setText(getString(R.string.status_img_gallery_1) + " " + String.valueOf(imageStream.size()) + " " + getString(R.string.status_img_gallery_2));
 
     }
 
     public void previewImage(View view) {
-        if (image == null) {
+        if (imageStream.get(0) == null) {
             Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
         } else {
             Intent intent = new Intent(getApplicationContext(), PreviewActivity.class);
@@ -318,6 +321,26 @@ public class OCRActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(getBaseContext(), e.getMessage(),
                     Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item:
+                //Toast.makeText(this, "ADD!", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(this, SettingsActivity.class);
+                startActivity(i);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 }
