@@ -1,7 +1,6 @@
 package com.temerarious.mccocr13.temerariousocr.activities;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,12 +11,9 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,27 +25,20 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
 import com.facebook.login.LoginManager;
 import com.temerarious.mccocr13.temerariousocr.R;
-import com.temerarious.mccocr13.temerariousocr.fragments.FacebookFragment;
+import com.temerarious.mccocr13.temerariousocr.helpers.BenchmarkResults;
 import com.temerarious.mccocr13.temerariousocr.helpers.OCRInitializer;
 import com.temerarious.mccocr13.temerariousocr.tasks.PrepareRemote;
 import com.temerarious.mccocr13.temerariousocr.tasks.RunLocalOCR;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-
-import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class OCRActivity extends AppCompatActivity {
@@ -65,6 +54,7 @@ public class OCRActivity extends AppCompatActivity {
     Button button_save;
     Button logoutFB;
     Uri imageUri;
+    public static BenchmarkResults benchmarkResults;
 
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
@@ -253,12 +243,8 @@ public class OCRActivity extends AppCompatActivity {
 
         if (imageStream.size() == 0) {
             Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
-        }
-        // If mode = Local
-        else if (selectedMode.equals(type[0])) {
-
-            RunLocalOCR runLocalOCR = new RunLocalOCR(this, this);
-            runLocalOCR.execute();
+        } else if (selectedMode.equals(type[0])) {
+            runLocalMode(false);
 
             /*
             button_save = (Button) findViewById(R.id.button_save);
@@ -298,20 +284,33 @@ public class OCRActivity extends AppCompatActivity {
                     }
                 }
             }).start();*/
-        }
-        // If mode = Remote
-        else if (selectedMode.equals(type[1])) {
-            String images_total = String.valueOf(imageStream.size());
-            PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
-            prepareRemote.execute(images_total);
-        }
-        // If mode = Benchmark
-        else if (selectedMode.equals(type[2])) {
-            // TODO: run local, dismiss result and get times
-            // TODO: run remote, dismiss result and get times
-            // TODO: display the statistics
+        } else if (selectedMode.equals(type[1])) {
+            runRemoteMode(false);
+        } else if (selectedMode.equals(type[2])) {
+            runBenchmarkMode();
         }
 
+    }
+
+    private void runLocalMode(boolean benchmark) {
+        RunLocalOCR runLocalOCR = new RunLocalOCR(this, this, benchmark);
+        runLocalOCR.execute();
+    }
+
+    public void runRemoteMode(boolean benchmark) {
+        String images_total = String.valueOf(imageStream.size());
+        PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
+        prepareRemote.execute(images_total);
+    }
+
+    private void runBenchmarkMode() {
+        benchmarkResults = new BenchmarkResults();
+        benchmarkResults.setNumberOfFiles(imageStream.size());
+
+        runLocalMode(true);
+
+        //RunBenchmark runBenchmark = new RunBenchmark(OCRActivity.this, OCRActivity.this);
+        //runBenchmark.execute();
     }
 
     public void openRecords(View view) {

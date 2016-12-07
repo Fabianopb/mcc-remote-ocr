@@ -39,7 +39,8 @@
         <activity android:name=".activities.RecordsActivity" />
         <activity android:name=".activities.DetailsActivity" />
         <activity android:name=".activities.PreviewActivity" />
-        <activity android:name=".activities.ResultActivity"></activity>
+        <activity android:name=".activities.ResultActivity" />
+        <activity android:name=".activities.BenchmarkActivity"></activity>
     </application>
 
 </manifest>

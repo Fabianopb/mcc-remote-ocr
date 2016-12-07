@@ -31,6 +31,7 @@
     <!-- strings for the local mode -->
     <string name="running_local_ocr">Translating images locally...</string>
     <string name="local_ocr_error">An error occurred when running the OCR</string>
+    <string name="local_header">LOCAL processing times:</string>
 
     <!-- strings for the remote mode -->
     <string name="remote_dialog">Preparing backend to receive images</string>
@@ -38,6 +39,10 @@
     <string name="uploading_images">Uploading images...</string>
     <string name="no_records">No records found!</string>
     <string name="getting_records">Loading...</string>
+
+    <!-- strings for the benchmark mode -->
+    <string name="running_benchmark">Running benchmark</string>
+    <string name="benchmark_error">Something went wrong in the benchmark...</string>
 
     <string name="cancelled">Cancelled</string>
     <string name="permission_not_granted">Unable to perform selected action because permissions were not granted.</string>
