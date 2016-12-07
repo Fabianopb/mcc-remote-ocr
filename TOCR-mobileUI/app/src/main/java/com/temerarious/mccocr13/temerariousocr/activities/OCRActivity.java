@@ -245,8 +245,11 @@ public class OCRActivity extends AppCompatActivity {
 
     public void processImage(View view) {
 
+        if (imageStream.size() == 0) {
+            Toast.makeText(this, getString(R.string.toast_no_images), Toast.LENGTH_SHORT).show();
+        }
         // If mode = Local
-        if (selectedMode.equals(type[0])) {
+        else if (selectedMode.equals(type[0])) {
 
             RunLocalOCR runLocalOCR = new RunLocalOCR(this, this);
             runLocalOCR.execute();
