@@ -277,7 +277,7 @@ class GetImageHandler(RequestHandler):
             respond_and_log_error(self, 404, 'Malformed image ID')
             return
 
-        #user = yield db_safe.find_user(db, 'testuser')
+        # user = yield db_safe.find_user(db, 'testuser')
 
         # try:
         #     if not any(record['image_fs_ids']['thumbnail_fs_id'] == slug for record in user['records']):
@@ -432,9 +432,16 @@ def perform_ocr_and_store(image, username):
     pil_image = Image.open(BytesIO(image['body']))
     ocr_text = pytesseract.image_to_string(pil_image)
     thumbnail = yield create_thumbnail(pil_image)
-    image_fs_id = fs.put(image['body'], content_type=image['content_type'], filename=image['filename'],
-                         username=username)
-    thumbnail_fs_id = fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename'], username=username)
+    image_fs_id = fs.put(image['body'],
+                         content_type=image['content_type'],
+                         filename=image['filename'],
+                         username=username,
+                         original=True)
+    thumbnail_fs_id = fs.put(thumbnail,
+                             content_type='image/jpeg',
+                             filename='t_' + image['filename'],
+                             username=username,
+                             original=False)
     return ocr_text, image_fs_id, thumbnail_fs_id
 
 
@@ -503,6 +510,34 @@ class JSONDateTimeEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
+# Removes source images older than SOURCE_IMAGE_LIFETIME from the database
+@gen.coroutine
+def database_cleanup():
+    while True:
+        logging.info('Cleaning up old source images older than ' + str(SOURCE_IMAGE_LIFETIME) + ' days from database...')
+        now = datetime.datetime.utcnow()
+        lifetime_limit = now - datetime.timedelta(days=SOURCE_IMAGE_LIFETIME)
+
+        users = db.users.find({'records.creation_time': {'$lt': lifetime_limit}})
+        for user in users:
+            for record in user['records']:
+                if record['creation_time'] < lifetime_limit and 'cleaned' not in record:
+                    for image in record['image_fs_ids']:
+                        image_fs_id = image.pop('image_fs_id', None)
+                        if image_fs_id is not None:
+                            fs.delete(image_fs_id)
+                            logging.info('Deleted image from GridFS: ' + str(image_fs_id))
+                    record['cleaned'] = True
+            result = yield db_safe.update_user(db, user['username'], {'$set': {'records': user['records']}})
+            logging.info("Cleaned up records for user: " + user['username'])
+
+        images = fs.find({'original': True, 'uploadDate': {'$lt': now}});
+        for image in images:
+            print(image.filename)
+        logging.info('Database cleanup complete')
+        yield gen.sleep(3600)
+
+
 # URL routes etc.
 def make_app():
     return tornado.web.Application([
@@ -549,6 +584,7 @@ def start_tornado():
     })
     https_server.listen(443)
     logging.info('Web server is waiting for requests...')
+    tornado.ioloop.IOLoop.current().spawn_callback(database_cleanup)
     tornado.ioloop.IOLoop.instance().start()
 
 
