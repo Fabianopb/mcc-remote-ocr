@@ -49,6 +49,8 @@ import com.temerarious.mccocr13.temerariousocr.R;
 import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
 import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 import com.temerarious.mccocr13.temerariousocr.helpers.ImageHelper;
+import com.temerarious.mccocr13.temerariousocr.tasks.BasicAuthentication;
+import com.temerarious.mccocr13.temerariousocr.tasks.FacebookAuthentication;
 
 import org.json.JSONObject;
 
@@ -72,6 +74,7 @@ public class FacebookFragment extends Fragment{
     private ProfileTracker profileTracker;
     private ShareDialog shareDialog;
     String token = "";
+    String password="";
     TextView fbt;
     private FacebookCallback<Sharer.Result> shareCallback = new FacebookCallback<Sharer.Result>() {
         @Override
@@ -157,18 +160,18 @@ public class FacebookFragment extends Fragment{
                                 SharedPreferences sharedPref = getActivity().getSharedPreferences("sessionData", Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPref.edit();
                                 editor.putString("token", token);
+                                Log.d("HUI", token);
                                 editor.apply();
+                                FacebookAuthentication facebookAuthentication = new FacebookAuthentication(FacebookFragment.this, getActivity());
+                                facebookAuthentication.execute();
                                 // Application code
                             }
                         });
                 request.executeAsync();
                 loginButton.setVisibility(View.GONE);
                 fbt.setVisibility(View.VISIBLE);
-
-
-                Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
-                startActivity(intent);
-
+                /*Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
+                startActivity(intent);*/
                 toast.show();
                 handlePendingAction();
                 updateUI();
