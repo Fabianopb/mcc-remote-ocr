@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -45,6 +46,8 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
+        String credentials = Credentials.basic(OCRActivity.token, "");
+
         String prepare_remote_url = "https://" + server_ip + "/ocr/";
         String images_total = params[0];
 
@@ -66,12 +69,15 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
 
             Request request = new Request.Builder()
                     .url(prepare_remote_url)
+                    .header("Authorization", credentials)
                     .post(requestBody)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
-
 
         } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
             e.printStackTrace();

@@ -8,10 +8,13 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
 import com.temerarious.mccocr13.temerariousocr.activities.RecordsActivity;
 
@@ -49,6 +52,8 @@ public class FetchRecords extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
+        String credentials = Credentials.basic(OCRActivity.token, "");
+
         String numberOfRecords = params[0];
         String recordsUrl = "https://" + server_ip + "/records/?amount=" + numberOfRecords;
 
@@ -65,11 +70,14 @@ public class FetchRecords extends AsyncTask<String,Void,String> {
 
             Request request = new Request.Builder()
                     .url(recordsUrl)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
-
 
         } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();
@@ -91,7 +99,11 @@ public class FetchRecords extends AsyncTask<String,Void,String> {
                 JSONObject jsonObj = new JSONObject(result);
                 JSONArray recordsArray = jsonObj.getJSONArray("records");
 
-                source.createRecordsList(recordsArray);
+                if (recordsArray.length() > 0) {
+                    source.createRecordsList(recordsArray);
+                } else {
+                    Toast.makeText(context, R.string.no_records, Toast.LENGTH_SHORT).show();
+                }
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());

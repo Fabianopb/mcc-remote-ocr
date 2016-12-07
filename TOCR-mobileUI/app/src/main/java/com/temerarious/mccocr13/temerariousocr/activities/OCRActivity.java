@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -55,6 +57,7 @@ public class OCRActivity extends AppCompatActivity {
     public OCRInitializer ocrInitializer = new OCRInitializer(this, this);
 
     private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
+    public static String token;
     private TextView imgSelectorStatus;
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
@@ -70,6 +73,9 @@ public class OCRActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ocr);
+
+        SharedPreferences sharedPref = getSharedPreferences("sessionData", Context.MODE_PRIVATE);
+        token = sharedPref.getString("token", "");
 
         ocrInitializer.initOCR();
 
@@ -301,7 +307,9 @@ public class OCRActivity extends AppCompatActivity {
         }
         // If mode = Benchmark
         else if (selectedMode.equals(type[2])) {
-
+            // TODO: run local, dismiss result and get times
+            // TODO: run remote, dismiss result and get times
+            // TODO: display the statistics
         }
 
     }
