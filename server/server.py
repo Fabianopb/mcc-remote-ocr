@@ -24,7 +24,6 @@ import requests
 import pprint
 import db_safe
 
-
 # App settings
 THUMBNAIL_SIZE = 128, 128
 SOURCE_IMAGE_LIFETIME = 7
@@ -236,6 +235,7 @@ class GetRecordsHandler(RequestHandler):
     """
     Gets a given amount of OCR records from the database and returns the data as JSON
     """
+
     @requireAuthentication(verify_password)
     @gen.coroutine
     def get(self, username):
@@ -263,10 +263,10 @@ class GetImageHandler(RequestHandler):
     """
     Gets an image from the GridFS database.
     """
+
     @requireAuthentication(verify_password)
     @gen.coroutine
     def get(self, slug, username):
-        # TODO: Check that user has permission to get the image
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -277,12 +277,29 @@ class GetImageHandler(RequestHandler):
             respond_and_log_error(self, 404, 'Malformed image ID')
             return
 
+        #user = yield db_safe.find_user(db, 'testuser')
+
+        # try:
+        #     if not any(record['image_fs_ids']['thumbnail_fs_id'] == slug for record in user['records']):
+        #         if not any(record['image_fs_ids']['image_fs_id'] == slug for record in user['records']):
+        #             respond_and_log_error(self, 403, 'No permission to access image')
+        #             return
+        # except KeyError:
+        #     respond_and_log_error(self, 404, 'No such image in database')
+        #     return
+
         # Check that image exists in GridFS
         image = fs.find_one({'_id': fs_id})
         if image is None:
             respond_and_log_error(self, 404, 'No such image in database')
             return
 
+        print(str(image))
+        # Check that user has permission to access the image
+        if username != image.username:
+            print('wtf')
+            respond_and_log_error(self, 403, 'No permission to access image')
+            return
         self.set_header('Content-type', image.content_type)
         self.write(image.read())
 
@@ -297,6 +314,7 @@ class OCRHandler(RequestHandler):
     """
     Registers a new transaction in the database, which is used for monitoring image uploads.
     """
+
     @requireAuthentication(verify_password)
     @gen.coroutine
     def post(self, username):
@@ -322,6 +340,7 @@ class UploadImageHandler(RequestHandler):
     Handles individual image uploads and updates the user's records, when last image of a transaction is uploaded.
     """
 
+    @requireAuthentication(verify_password)
     @gen.coroutine
     def post(self, username):
         logging.debug('User: ' + username)
@@ -361,7 +380,7 @@ class UploadImageHandler(RequestHandler):
                 return
 
             # Perform OCR and store image and its thumbnail in GridFS
-            ocr_text, image_fs_id, thumbnail_fs_id = yield perform_ocr_and_store(image)
+            ocr_text, image_fs_id, thumbnail_fs_id = yield perform_ocr_and_store(image, username)
             image_fs_ids = {
                 'image_fs_id': image_fs_id,
                 'thumbnail_fs_id': thumbnail_fs_id
@@ -399,7 +418,7 @@ class UploadImageHandler(RequestHandler):
 
 
 @gen.coroutine
-def perform_ocr_and_store(image):
+def perform_ocr_and_store(image, username):
     """
     Performs Tesseract OCR processing on the given image, creates a thumbnail and stores the image and its
     thumbnail to the database using GridFS.
@@ -413,8 +432,9 @@ def perform_ocr_and_store(image):
     pil_image = Image.open(BytesIO(image['body']))
     ocr_text = pytesseract.image_to_string(pil_image)
     thumbnail = yield create_thumbnail(pil_image)
-    image_fs_id = fs.put(image['body'], content_type=image['content_type'], filename=image['filename'])
-    thumbnail_fs_id = fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename'])
+    image_fs_id = fs.put(image['body'], content_type=image['content_type'], filename=image['filename'],
+                         username=username)
+    thumbnail_fs_id = fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename'], username=username)
     return ocr_text, image_fs_id, thumbnail_fs_id
 
 
