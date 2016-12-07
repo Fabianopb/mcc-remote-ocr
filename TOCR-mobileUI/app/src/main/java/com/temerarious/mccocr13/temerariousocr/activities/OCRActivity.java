@@ -295,7 +295,7 @@ public class OCRActivity extends AppCompatActivity {
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
-            String images_total = "1";
+            String images_total = String.valueOf(imageStream.size());
             PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
             prepareRemote.execute(images_total);
         }
