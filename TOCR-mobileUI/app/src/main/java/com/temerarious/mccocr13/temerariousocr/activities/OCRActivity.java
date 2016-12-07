@@ -15,6 +15,7 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,7 +27,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
+import com.facebook.login.LoginManager;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.fragments.FacebookFragment;
 import com.temerarious.mccocr13.temerariousocr.helpers.OCRInitializer;
 import com.temerarious.mccocr13.temerariousocr.tasks.PrepareRemote;
 import com.temerarious.mccocr13.temerariousocr.tasks.RunLocalOCR;
@@ -40,6 +47,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
+import static com.facebook.FacebookSdk.getApplicationContext;
+
 
 public class OCRActivity extends AppCompatActivity {
 
@@ -51,8 +60,8 @@ public class OCRActivity extends AppCompatActivity {
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
     Button button_save;
+    Button logoutFB;
     Uri imageUri;
-    int i;
 
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
@@ -86,6 +95,16 @@ public class OCRActivity extends AppCompatActivity {
         imgSelectorStatus = (TextView) findViewById(R.id.img_selector_status);
         imgSelectorStatus.setText(getString(R.string.status_no_image));
 
+        logoutFB=(Button) findViewById(R.id.logoutFB);
+        logoutFB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                disconnectFromFacebook();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+            }
+        });
+
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
@@ -106,6 +125,10 @@ public class OCRActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void disconnectFromFacebook() {
+        LoginManager.getInstance().logOut();
     }
 
     public void select_from_galery() {

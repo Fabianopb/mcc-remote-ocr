@@ -4,12 +4,15 @@ package com.temerarious.mccocr13.temerariousocr.fragments;
  * Created by ivan on 29.11.16.
  */
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -22,11 +25,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.facebook.AccessToken;
+import com.facebook.BuildConfig;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookAuthorizationException;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.LoggingBehavior;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
 import com.facebook.appevents.AppEventsLogger;
@@ -39,8 +46,11 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareDialog;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
 import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 import com.temerarious.mccocr13.temerariousocr.helpers.ImageHelper;
+
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.util.Arrays;
@@ -52,22 +62,17 @@ public class FacebookFragment extends Fragment{
     private LoginButton loginButton;
     private boolean postingEnabled = false;
 
-
-
-
-    private static final String PERMISSION = "publish_actions";
     private final String PENDING_ACTION_BUNDLE_KEY = "com.temerarious";
 
     private Button postStatusUpdateButton;
     private ImageView profilePicImageView;
     private TextView greeting;
     private PendingAction pendingAction = PendingAction.NONE;
-    private boolean canPresentShareDialog;
-
-    private boolean canPresentShareDialogWithPhotos;
     private CallbackManager callbackManager;
     private ProfileTracker profileTracker;
     private ShareDialog shareDialog;
+    String token = "";
+    TextView fbt;
     private FacebookCallback<Sharer.Result> shareCallback = new FacebookCallback<Sharer.Result>() {
         @Override
         public void onCancel() {
@@ -91,6 +96,7 @@ public class FacebookFragment extends Fragment{
                 String alertMessage = getString(R.string.successfully_posted_post, id);
                 showResult(title, alertMessage);
             }
+
         }
 
         private void showResult(String title, String alertMessage) {
@@ -112,6 +118,11 @@ public class FacebookFragment extends Fragment{
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getActivity());
         // Other app specific specialization
+        Profile profile = Profile.getCurrentProfile();
+        if (profile!=null) {
+            Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -126,16 +137,35 @@ public class FacebookFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.activity_layout, parent, false);
         loginButton = (LoginButton) v.findViewById(R.id.loginButton);
-        // If using in a fragment
         loginButton.setFragment(this);
+        fbt=(TextView)v.findViewById(R.id.fbt);
+        fbt.setVisibility(View.GONE);
         callbackManager = CallbackManager.Factory.create();
         // Callback registration
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Toast toast = Toast.makeText(getActivity(), "Logged In", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(getActivity(), "Logged in with Facebook " , Toast.LENGTH_LONG);
                 postingEnabled = true;
-                postStatusUpdateButton.setVisibility(View.VISIBLE);
+                final GraphRequest request = GraphRequest.newMeRequest(
+                        AccessToken.getCurrentAccessToken(),
+                        new GraphRequest.GraphJSONObjectCallback() {
+                            @Override
+                            public void onCompleted(JSONObject jsonObject, GraphResponse response) {
+                                token=AccessToken.getCurrentAccessToken().getToken();
+                                Log.d("Facebook token", token);
+                                SharedPreferences sharedPref = getActivity().getSharedPreferences("sessionData", Context.MODE_PRIVATE);
+                                SharedPreferences.Editor editor = sharedPref.edit();
+                                editor.putString("token", token);
+                                editor.apply();
+                                // Application code
+                            }
+                        });
+                request.executeAsync();
+                loginButton.setVisibility(View.GONE);
+                fbt.setVisibility(View.VISIBLE);
+
+
                 Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
                 startActivity(intent);
 
@@ -198,21 +228,7 @@ public class FacebookFragment extends Fragment{
         profilePicImageView = (ImageView) v.findViewById(R.id.profilePicture);
         greeting = (TextView) v.findViewById(R.id.greeting);
 
-        postStatusUpdateButton = (Button) v.findViewById(R.id.postStatusUpdateButton);
-        postStatusUpdateButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                onClickPostStatusUpdate();
-            }
-        });
 
-
-        // Can we present the share dialog for regular links?
-        canPresentShareDialog = ShareDialog.canShow(
-                ShareLinkContent.class);
-
-        // Can we present the share dialog for photos?
-        canPresentShareDialogWithPhotos = ShareDialog.canShow(
-                SharePhotoContent.class);
 
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -223,13 +239,10 @@ public class FacebookFragment extends Fragment{
                 if(!postingEnabled) {
 
                     postingEnabled = true;
-                    postStatusUpdateButton.setVisibility(View.VISIBLE);
 
                 }else{
 
                     postingEnabled = false;
-                    postStatusUpdateButton.setVisibility(View.GONE);
-
                 }
 
 
@@ -248,11 +261,6 @@ public class FacebookFragment extends Fragment{
         // reporting.  Do so in the onResume methods of the primary Activities that an app may be
         // launched into.
         AppEventsLogger.activateApp(getActivity());
-/*        String token = AccessToken.getCurrentAccessToken().getToken();
-        if (token != null) {
-            Log.d("My log", token);
-        }
-*/
         updateUI();
     }
 
@@ -279,7 +287,7 @@ public class FacebookFragment extends Fragment{
 
 
 
-        postStatusUpdateButton.setEnabled(enableButtons || canPresentShareDialog);
+       // postStatusUpdateButton.setEnabled(enableButtons || canPresentShareDialog);
 
 
         Profile profile = Profile.getCurrentProfile();
@@ -287,7 +295,13 @@ public class FacebookFragment extends Fragment{
             new LoadProfileImage(profilePicImageView).execute(profile.getProfilePictureUri(200, 200).toString());
             greeting.setText(getString(R.string.hello_user, profile.getFirstName(), profile.getLastName()));
             postingEnabled = true;
-            postStatusUpdateButton.setVisibility(View.VISIBLE);
+            profilePicImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
+                    startActivity(intent);
+                }
+            });
 
 
         } else {
@@ -295,7 +309,7 @@ public class FacebookFragment extends Fragment{
             profilePicImageView.setImageBitmap(ImageHelper.getRoundedCornerBitmap(getApplicationContext(), icon, 200, 200, 200, false, false, false, false));
             greeting.setText(null);
             postingEnabled = false;
-            postStatusUpdateButton.setVisibility(View.GONE);
+
 
         }
     }
@@ -318,32 +332,11 @@ public class FacebookFragment extends Fragment{
             case NONE:
                 break;
 
-            case POST_STATUS_UPDATE:
-                postStatusUpdate();
-                break;
+
         }
     }
 
-    private void onClickPostStatusUpdate() {
-        performPublish(PendingAction.POST_STATUS_UPDATE, canPresentShareDialog);
-    }
 
-    private void postStatusUpdate() {
-        Profile profile = Profile.getCurrentProfile();
-        ShareLinkContent linkContent = new ShareLinkContent.Builder()
-                .setContentTitle("Integrate Facebook Login to your Android App")
-                .setContentDescription(
-                        "This app shows how to integrate Facebook Login to your Android App")
-                .setContentUrl(Uri.parse("http://localhost.ru/"))
-                .build();
-        if (canPresentShareDialog) {
-            shareDialog.show(linkContent);
-        } else if (profile != null && hasPublishPermission()) {
-            ShareApi.share(linkContent, shareCallback);
-        } else {
-            pendingAction = PendingAction.POST_STATUS_UPDATE;
-        }
-    }
 
 
 

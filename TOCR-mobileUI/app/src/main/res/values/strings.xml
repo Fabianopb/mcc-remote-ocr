@@ -53,5 +53,6 @@
     <string name="no_place_selected">&lt;No place selected&gt;</string>
     <string name="pick_seattle_place">Pick a Seattle Place</string>
     <string name="save_file">Save File</string>
+    <string name="update">Click on your photo icon to return to OCR</string>
 
 </resources>
