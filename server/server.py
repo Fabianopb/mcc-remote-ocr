@@ -80,8 +80,7 @@ def verify_auth_token(token):
         return None  # invalid token
     username = data['id']
 
-    user = db.users.find_one({"username": data['id']})
-    #user = db_safe.find_user(db, username)
+    user = db.users.find_one({"username": username})
     if user is not None or username.endswith(FB_SUFFIX):
         return username
     else:
@@ -133,7 +132,6 @@ class TokenHandler(tornado.web.RequestHandler):
 
 class FBTokenHandler(tornado.web.RequestHandler):
     # TODO: Make this asynchronous
-    @gen.coroutine
     def get(self):
         userToken = self.get_argument('token')
 
@@ -160,7 +158,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
-        user = yield db_safe.find_user(db, username)
+        user = db.users.find_one({'username': username})
         if user is None:
             logging.debug('Adding to DB')
             user = {
@@ -168,7 +166,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
                 'password': FB_NO_PASS,  # FB users cannot be authorised locally
                 'records': []
             }
-            yield db_safe.insert_user(db, user)
+            db.users.insert_one(user)
             logging.debug('Added to DB')
 
         token = generate_auth_token(username)
@@ -207,7 +205,7 @@ class AddUserHandler(RequestHandler):
             'password': hashed_password,
             'records': []
         }
-        yield db_safe.insert_user(db, user)
+        db.users.insert_one(user)
 
         self.write('OK')
 
@@ -223,7 +221,7 @@ class AddTestuserHandler(RequestHandler):
             'password': hashed_password,
             'records': []
         }
-        yield db_safe.insert_user(db, user)
+        db.users.insert_one(user)
         self.write('OK')
 
 
@@ -239,8 +237,9 @@ class GetRecordsHandler(RequestHandler):
     Gets a given amount of OCR records from the database and returns the data as JSON
     """
 
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def get(self):
+    def get(self, username):
         username = 'test'
         logging.debug(self.request)
 
