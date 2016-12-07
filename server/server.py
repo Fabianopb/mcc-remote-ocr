@@ -236,11 +236,10 @@ class GetRecordsHandler(RequestHandler):
     """
     Gets a given amount of OCR records from the database and returns the data as JSON
     """
-
     @requireAuthentication(verify_password)
     @gen.coroutine
     def get(self, username):
-        username = 'test'
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         # TODO: Implement authentication
@@ -264,9 +263,11 @@ class GetImageHandler(RequestHandler):
     """
     Gets an image from the GridFS database.
     """
-
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def get(self, slug):
+    def get(self, slug, username):
+        # TODO: Check that user has permission to get the image
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         # Check that slug is a valid ObjectId
@@ -296,11 +297,10 @@ class OCRHandler(RequestHandler):
     """
     Registers a new transaction in the database, which is used for monitoring image uploads.
     """
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def post(self):
-        # TODO: Implement authentication
-        username = 'test'
-
+    def post(self, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         images_total = int(self.get_body_argument('images_total'))
@@ -323,10 +323,10 @@ class UploadImageHandler(RequestHandler):
     """
 
     @gen.coroutine
-    def post(self):
-        # TODO: Implement authentication
-        username = 'test'
+    def post(self, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
+
         # Check that UID is a valid ObjectId
         try:
             uid = ObjectId(self.get_body_argument('uid'))
