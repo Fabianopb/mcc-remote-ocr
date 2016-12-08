@@ -56,34 +56,39 @@ public class RecordsListAdapter extends ArrayAdapter<String> {
         ImageView ocrThumb = (ImageView) rowView.findViewById(R.id.record_thumb);
         TextView ocrText = (TextView) rowView.findViewById(R.id.record_text);
 
-        String imageUrl = "https://" + mServerIp + "/image/" + mThumbsCollection.get(i).get(0);
         Bitmap bmp = null;
 
-        try {
+        if (mThumbsCollection.get(i).get(0).equals("")) {
+            bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.not_available);
+        } else {
 
-            OkHttpClient client = new OkHttpClient()
-                    .setSslSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory())
-                    .setHostnameVerifier(new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    });
+            try {
+                String imageUrl = "https://" + mServerIp + "/image/" + mThumbsCollection.get(i).get(0);
 
-            Request request = new Request.Builder()
-                    .url(imageUrl)
-                    .header("Authorization", credentials)
-                    .build();
+                OkHttpClient client = new OkHttpClient()
+                        .setSslSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory())
+                        .setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String hostname, SSLSession session) {
+                                return true;
+                            }
+                        });
 
-            Response response = client.newCall(request).execute();
-            if (response.code() != 200) {
-                throw new IOException("Unauthorized");
+                Request request = new Request.Builder()
+                        .url(imageUrl)
+                        .header("Authorization", credentials)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+                if (response.code() != 200) {
+                    throw new IOException("Unauthorized");
+                }
+                bmp = BitmapFactory.decodeStream(response.body().byteStream());
+
+
+            } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+                e.printStackTrace();
             }
-            bmp = BitmapFactory.decodeStream(response.body().byteStream());
-
-
-        } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-            e.printStackTrace();
         }
 
         ocrThumb.setImageBitmap(bmp);

@@ -59,9 +59,9 @@ public class RecordsActivity extends AppCompatActivity {
                 int totalImages = imagesJSONArray.length();
                 for (int j = 0; j < totalImages; j++) {
                     JSONObject imageIDs = imagesJSONArray.getJSONObject(j);
-                    String imageID = imageIDs.getString("image_fs_id");
+                    String imageID = imageIDs.has("image_fs_id") ? imageIDs.getString("image_fs_id") : "";
                     imagesList.add(imageID);
-                    String thumbID = imageIDs.getString("thumbnail_fs_id");
+                    String thumbID = imageIDs.has("thumbnail_fs_id") ? imageIDs.getString("thumbnail_fs_id") : "";
                     thumbsList.add(thumbID);
                 }
                 imagesListsList.add(imagesList);

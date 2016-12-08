@@ -52,8 +52,8 @@ public class DetailsActivity extends AppCompatActivity {
         ll.addView(msg);
 
         for (int i = 0; i < imagesArray.length; i++) {
-            ImageView iv = new ImageView(this);
             Bitmap bitmap = getFullImage(imagesArray[i]);
+            ImageView iv = new ImageView(this);
             iv.setImageBitmap(bitmap);
             ll.addView(iv);
         }
@@ -62,34 +62,39 @@ public class DetailsActivity extends AppCompatActivity {
 
     private Bitmap getFullImage(String imageID) {
 
-        String imageUrl = "https://" + server_ip + "/image/" + imageID;
         Bitmap bmp = null;
 
-        try {
+        if (imageID.equals("")) {
+            bmp = BitmapFactory.decodeResource(getResources(), R.drawable.not_available);
+        } else {
 
-            OkHttpClient client = new OkHttpClient()
-                    .setSslSocketFactory(SecureSocket.getSSLContext(DetailsActivity.this).getSocketFactory())
-                    .setHostnameVerifier(new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    });
+            try {
+                String imageUrl = "https://" + server_ip + "/image/" + imageID;
 
-            Request request = new Request.Builder()
-                    .url(imageUrl)
-                    .header("Authorization", credentials)
-                    .build();
+                OkHttpClient client = new OkHttpClient()
+                        .setSslSocketFactory(SecureSocket.getSSLContext(DetailsActivity.this).getSocketFactory())
+                        .setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String hostname, SSLSession session) {
+                                return true;
+                            }
+                        });
 
-            Response response = client.newCall(request).execute();
-            if (response.code() != 200) {
-                throw new IOException("Unauthorized");
+                Request request = new Request.Builder()
+                        .url(imageUrl)
+                        .header("Authorization", credentials)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+                if (response.code() != 200) {
+                    throw new IOException("Unauthorized");
+                }
+                bmp = BitmapFactory.decodeStream(response.body().byteStream());
+
+
+            } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+                e.printStackTrace();
             }
-            bmp = BitmapFactory.decodeStream(response.body().byteStream());
-
-
-        } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-            e.printStackTrace();
         }
 
         return bmp;
