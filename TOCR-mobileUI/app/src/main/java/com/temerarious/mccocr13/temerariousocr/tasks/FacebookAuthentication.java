@@ -55,7 +55,7 @@ public class FacebookAuthentication extends AsyncTask<String,Void,String> {
         HERE_USER_TOKEN = sharedPref.getString("token", "");
         Log.d("LOG", HERE_USER_TOKEN);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
-        String prepare_remote_url = "https://" + server_ip + "/fb_token?token=#"+HERE_USER_TOKEN;
+        String prepare_remote_url = "https://" + server_ip + "/fb_token?token="+HERE_USER_TOKEN;
 
         try {
 
@@ -105,10 +105,13 @@ public class FacebookAuthentication extends AsyncTask<String,Void,String> {
             SharedPreferences sharedPref = source.getActivity().getSharedPreferences("sessionData", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putString("token", token);
+            Log.d("Facebook token2", token);
             editor.apply();
+            Toast.makeText(context, R.string.authentication_ok, Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(context, OCRActivity.class);
             context.startActivity(intent);
+
 
         } catch (JSONException | IOException e) {
             Log.e("Parsing error", e.toString());
@@ -121,4 +124,7 @@ public class FacebookAuthentication extends AsyncTask<String,Void,String> {
     protected void onProgressUpdate(Void... values) {
         super.onProgressUpdate(values);
     }
+
+
 }
+

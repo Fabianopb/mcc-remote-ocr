@@ -104,7 +104,7 @@ public class BasicAuthentication extends AsyncTask<String,Void,String> {
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putString("token", token);
             editor.apply();
-
+            MainActivity.login="basicLogin";
             Intent intent = new Intent(context, OCRActivity.class);
             context.startActivity(intent);
 

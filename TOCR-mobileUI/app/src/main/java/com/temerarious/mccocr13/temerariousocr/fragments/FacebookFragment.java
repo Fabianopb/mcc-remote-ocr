@@ -74,7 +74,6 @@ public class FacebookFragment extends Fragment{
     private ProfileTracker profileTracker;
     private ShareDialog shareDialog;
     String token = "";
-    String password="";
     TextView fbt;
     private FacebookCallback<Sharer.Result> shareCallback = new FacebookCallback<Sharer.Result>() {
         @Override
@@ -148,7 +147,6 @@ public class FacebookFragment extends Fragment{
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Toast toast = Toast.makeText(getActivity(), "Logged in with Facebook " , Toast.LENGTH_LONG);
                 postingEnabled = true;
                 final GraphRequest request = GraphRequest.newMeRequest(
                         AccessToken.getCurrentAccessToken(),
@@ -160,8 +158,8 @@ public class FacebookFragment extends Fragment{
                                 SharedPreferences sharedPref = getActivity().getSharedPreferences("sessionData", Context.MODE_PRIVATE);
                                 SharedPreferences.Editor editor = sharedPref.edit();
                                 editor.putString("token", token);
-                                Log.d("HUI", token);
                                 editor.apply();
+                                MainActivity.login="facebook";
                                 FacebookAuthentication facebookAuthentication = new FacebookAuthentication(FacebookFragment.this, getActivity());
                                 facebookAuthentication.execute();
                                 // Application code
@@ -172,7 +170,6 @@ public class FacebookFragment extends Fragment{
                 fbt.setVisibility(View.VISIBLE);
                 /*Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
                 startActivity(intent);*/
-                toast.show();
                 handlePendingAction();
                 updateUI();
             }

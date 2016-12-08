@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -66,6 +67,7 @@ public class OCRActivity extends AppCompatActivity {
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,6 +107,10 @@ public class OCRActivity extends AppCompatActivity {
             }
         });
 
+        if (MainActivity.login.equals("basicLogin"))
+            logoutFB.setVisibility(View.GONE);
+        else
+            logoutFB.setVisibility(View.VISIBLE);
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
@@ -251,44 +257,7 @@ public class OCRActivity extends AppCompatActivity {
             RunLocalOCR runLocalOCR = new RunLocalOCR(this, this);
             runLocalOCR.execute();
 
-            /*
-            button_save = (Button) findViewById(R.id.button_save);
-            button_save.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    saveToText(ocrResult);
-                }
-            });
-            final Handler handle = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    super.handleMessage(msg);
-                    progressDialog.incrementProgressBy(1);
-                }
-            };
-            progressDialog = new ProgressDialog(OCRActivity.this);
-            progressDialog.setMax(10);
-            progressDialog.setMessage("OCR processing");
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progressDialog.show();
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (progressDialog.getProgress() <= progressDialog
-                                .getMax()) {
-                            Thread.sleep(200);
-                            handle.sendMessage(handle.obtainMessage());
-                            if (progressDialog.getProgress() == progressDialog
-                                    .getMax()) {
-                                progressDialog.dismiss();
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();*/
+
         }
         // If mode = Remote
         else if (selectedMode.equals(type[1])) {
@@ -356,5 +325,8 @@ public class OCRActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+    public void onBackPressed() {
+        finish();
     }
 }

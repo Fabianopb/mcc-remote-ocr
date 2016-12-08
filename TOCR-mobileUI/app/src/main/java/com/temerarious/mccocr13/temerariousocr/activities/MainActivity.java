@@ -25,6 +25,7 @@ import com.temerarious.mccocr13.temerariousocr.tasks.BasicAuthentication;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static String login="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,4 +86,5 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
 }
