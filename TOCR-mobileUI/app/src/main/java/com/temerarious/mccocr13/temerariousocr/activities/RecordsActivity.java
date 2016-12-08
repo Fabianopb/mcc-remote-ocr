@@ -40,6 +40,7 @@ public class RecordsActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
 
         final ArrayList<String> recordsList = new ArrayList<String>();
+        final ArrayList<String> timestampsList = new ArrayList<String>();
         final ArrayList<ArrayList<String>> imagesListsList = new ArrayList<ArrayList<String>>();
         final ArrayList<ArrayList<String>> thumbsListsList = new ArrayList<ArrayList<String>>();
 
@@ -49,6 +50,7 @@ public class RecordsActivity extends AppCompatActivity {
             try {
                 JSONObject record = recordsJSONArray.getJSONObject(i);
                 String creationTime = record.getString("creation_time");
+                timestampsList.add(creationTime);
                 String ocr_text = record.getString("ocr_text");
                 recordsList.add(ocr_text);
 
@@ -93,6 +95,7 @@ public class RecordsActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
                 intent.putExtra("ocr_text", recordsList.get(position));
                 intent.putExtra("images_array", imagesArray);
+                intent.putExtra("timestamp", timestampsList.get(position));
                 startActivity(intent);
 
             }

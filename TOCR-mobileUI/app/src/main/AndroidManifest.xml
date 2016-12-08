@@ -40,7 +40,8 @@
         <activity android:name=".activities.DetailsActivity" />
         <activity android:name=".activities.PreviewActivity" />
         <activity android:name=".activities.ResultActivity" />
-        <activity android:name=".activities.BenchmarkActivity"></activity>
+        <activity android:name=".activities.BenchmarkActivity" />
+        <activity android:name=".activities.ShowImagesActivity"></activity>
     </application>
 
 </manifest>

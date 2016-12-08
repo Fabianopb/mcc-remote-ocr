@@ -1,14 +1,17 @@
 package com.temerarious.mccocr13.temerariousocr.activities;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
@@ -28,21 +31,16 @@ import javax.net.ssl.SSLSession;
 
 public class DetailsActivity extends AppCompatActivity {
 
-    private String server_ip = "";
-    private String credentials = "";
+    private String[] imagesArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(DetailsActivity.this);
-        server_ip = SP.getString("server_ip", getResources().getString(R.string.server_default_ip));
-
-        credentials = Credentials.basic(OCRActivity.token, "");
-
         String ocrText = getIntent().getStringExtra("ocr_text");
-        String[] imagesArray = getIntent().getStringArrayExtra("images_array");
+        imagesArray = getIntent().getStringArrayExtra("images_array");
+        String timestamp = getIntent().getStringExtra("timestamp");
 
         LinearLayout ll = (LinearLayout) findViewById(R.id.details_linear_layout);
 
@@ -51,53 +49,23 @@ public class DetailsActivity extends AppCompatActivity {
         msg.setText(ocrText);
         ll.addView(msg);
 
-        for (int i = 0; i < imagesArray.length; i++) {
-            Bitmap bitmap = getFullImage(imagesArray[i]);
-            ImageView iv = new ImageView(this);
-            iv.setImageBitmap(bitmap);
-            ll.addView(iv);
-        }
+        TextView timestampView = (TextView) findViewById(R.id.creation_time_view);
+        timestampView.setText(getString(R.string.created_at) + timestamp);
 
     }
 
-    private Bitmap getFullImage(String imageID) {
-
-        Bitmap bmp = null;
-
-        if (imageID.equals("")) {
-            bmp = BitmapFactory.decodeResource(getResources(), R.drawable.not_available);
-        } else {
-
-            try {
-                String imageUrl = "https://" + server_ip + "/image/" + imageID;
-
-                OkHttpClient client = new OkHttpClient()
-                        .setSslSocketFactory(SecureSocket.getSSLContext(DetailsActivity.this).getSocketFactory())
-                        .setHostnameVerifier(new HostnameVerifier() {
-                            @Override
-                            public boolean verify(String hostname, SSLSession session) {
-                                return true;
-                            }
-                        });
-
-                Request request = new Request.Builder()
-                        .url(imageUrl)
-                        .header("Authorization", credentials)
-                        .build();
-
-                Response response = client.newCall(request).execute();
-                if (response.code() != 200) {
-                    throw new IOException("Unauthorized");
-                }
-                bmp = BitmapFactory.decodeStream(response.body().byteStream());
-
-
-            } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-                e.printStackTrace();
+    public void showSourceImages(View view) {
+        for (int i = 0; i < imagesArray.length; i++) {
+            if (imagesArray[i].equals("")) {
+                Toast.makeText(this, getString(R.string.toast_no_source), Toast.LENGTH_SHORT).show();
+                return;
             }
         }
+        Intent intent = new Intent(getApplicationContext(), ShowImagesActivity.class);
+        intent.putExtra("images_array", imagesArray);
+        startActivity(intent);
+    }
 
-        return bmp;
-
+    public void saveTextAsFile(View view) {
     }
 }
