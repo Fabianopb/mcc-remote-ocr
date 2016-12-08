@@ -39,11 +39,13 @@ public class UploadImages extends AsyncTask<String,Void,String> {
 
     public OCRActivity source = null;
     private Context context;
+    private boolean runningInBenchmark = false;
     private ProgressDialog loading;
 
-    public UploadImages(OCRActivity fl, Context ctx) {
+    public UploadImages(OCRActivity fl, Context ctx, boolean benchmark) {
         source = fl;
         context = ctx;
+        runningInBenchmark = benchmark;
     }
 
     @Override
@@ -60,6 +62,8 @@ public class UploadImages extends AsyncTask<String,Void,String> {
         int imageIndex = Integer.parseInt(seq) - 1;
 
         try {
+
+            long tStart = System.currentTimeMillis();
 
             OkHttpClient client = new OkHttpClient()
                     .setSslSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory())
@@ -87,6 +91,13 @@ public class UploadImages extends AsyncTask<String,Void,String> {
             if (response.code() != 200) {
                 throw new IOException("Unauthorized");
             }
+
+            long tEnd = System.currentTimeMillis();
+            double delta = (tEnd - tStart) / 1000.0;
+            if (runningInBenchmark) {
+                source.benchmarkResults.setRemoteElapsedTime(imageIndex, delta);
+            }
+
             return response.body().string();
 
         } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
@@ -97,7 +108,8 @@ public class UploadImages extends AsyncTask<String,Void,String> {
 
     @Override
     protected void onPreExecute() {
-        loading = ProgressDialog.show(context, source.getResources().getString(R.string.uploading_images), null, true, true);
+        int stringId = runningInBenchmark ? R.string.running_benchmark : R.string.uploading_images;
+        loading = ProgressDialog.show(context, source.getResources().getString(stringId), null, true, true);
     }
 
     @Override
@@ -115,10 +127,14 @@ public class UploadImages extends AsyncTask<String,Void,String> {
                 String ocr_result = jsonObj.getString("ocr_result");
 
                 if (!message.equals("OCR finished")) {
-                    UploadImages uploadImages = new UploadImages(source, context);
+                    UploadImages uploadImages = new UploadImages(source, context, runningInBenchmark);
                     uploadImages.execute(uid, next_seq);
                 } else {
-                    source.displayTranslatedText(ocr_result);
+                    if (runningInBenchmark) {
+                        source.asyncTaskConcluded();
+                    } else {
+                        source.displayTranslatedText(ocr_result);
+                    }
                 }
 
             } catch (JSONException e) {

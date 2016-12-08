@@ -34,7 +34,6 @@
     <!-- strings for the local mode -->
     <string name="running_local_ocr">Translating images locally...</string>
     <string name="local_ocr_error">An error occurred when running the OCR</string>
-    <string name="local_header">LOCAL processing times:</string>
 
     <!-- strings for the remote mode -->
     <string name="remote_dialog">Preparing backend to receive images</string>
@@ -46,6 +45,17 @@
     <!-- strings for the benchmark mode -->
     <string name="running_benchmark">Running benchmark</string>
     <string name="benchmark_error">Something went wrong in the benchmark...</string>
+    <string name="benchmark_results">Benchmark results</string>
+    <string name="image_number"><![CDATA[* image #]]></string>
+    <string name="local_header"><![CDATA[<b>LOCAL</b> processing times:<br>]]></string>
+    <string name="remote_header"><![CDATA[<b>REMOTE</b> processing times:<br>]]></string>
+    <string name="total_time_of"><![CDATA[<b>TOTAL</b> time of&nbsp;]]></string>
+    <string name="average_time_of"><![CDATA[<b>AVERAGE</b> time of&nbsp;]]></string>
+    <string name="deviations_time_of"><![CDATA[<b>STANDARD DEVIATION</b> of&nbsp;]]></string>
+    <string name="minimum_time_of"><![CDATA[<b>MIN</b> time on image #]]></string>
+    <string name="maximum_time_of"><![CDATA[<b>MAX</b> time on image #]]></string>
+    <string name="seconds"><![CDATA[&nbsp;seconds<br>]]></string>
+    <string name="linebreak"><![CDATA[<br>]]></string>
 
     <string name="cancelled">Cancelled</string>
     <string name="permission_not_granted">Unable to perform selected action because permissions were not granted.</string>

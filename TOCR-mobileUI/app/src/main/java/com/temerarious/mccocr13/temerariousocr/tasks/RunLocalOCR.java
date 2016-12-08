@@ -56,8 +56,7 @@ public class RunLocalOCR extends AsyncTask<String,Void,String> {
         loading.dismiss();
         if(result != null) {
             if (runningInBenchmark) {
-                Intent intent = new Intent(context, BenchmarkActivity.class);
-                context.startActivity(intent);
+                source.asyncTaskConcluded();
             } else {
                 source.displayTranslatedText(result);
             }
