@@ -2,6 +2,7 @@ package com.temerarious.mccocr13.temerariousocr.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,5 +24,8 @@ public class ResultActivity extends AppCompatActivity {
         resultView.setText(ocrResult);
         ll.addView(resultView);
 
+    }
+
+    public void saveTextAsFile(View view) {
     }
 }
