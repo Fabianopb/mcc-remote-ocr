@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,7 +8,7 @@
     tools:context="com.temerarious.mccocr13.temerariousocr.activities.DetailsActivity">
 
     <LinearLayout
-        android:id="@+id/details_linear_layout"
+        android:id="@+id/benchmark_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

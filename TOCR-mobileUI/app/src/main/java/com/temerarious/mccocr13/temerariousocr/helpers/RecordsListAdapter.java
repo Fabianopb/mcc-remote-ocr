@@ -10,10 +10,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -35,6 +37,7 @@ public class RecordsListAdapter extends ArrayAdapter<String> {
     private final ArrayList<String> mTextsList;
     private final ArrayList<ArrayList<String>> mThumbsCollection;
     private final String mServerIp;
+    private String credentials = Credentials.basic(OCRActivity.token, "");
 
     public RecordsListAdapter(Activity context, ArrayList<String> textsList, ArrayList<ArrayList<String>> thumbsCollection, String serverIp) {
         super(context, R.layout.records_list_item, textsList);
@@ -69,9 +72,13 @@ public class RecordsListAdapter extends ArrayAdapter<String> {
 
             Request request = new Request.Builder()
                     .url(imageUrl)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             bmp = BitmapFactory.decodeStream(response.body().byteStream());
 
 

@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -28,6 +29,7 @@ import javax.net.ssl.SSLSession;
 public class DetailsActivity extends AppCompatActivity {
 
     private String server_ip = "";
+    private String credentials = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +38,8 @@ public class DetailsActivity extends AppCompatActivity {
 
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(DetailsActivity.this);
         server_ip = SP.getString("server_ip", getResources().getString(R.string.server_default_ip));
+
+        credentials = Credentials.basic(OCRActivity.token, "");
 
         String ocrText = getIntent().getStringExtra("ocr_text");
         String[] imagesArray = getIntent().getStringArrayExtra("images_array");
@@ -74,9 +78,13 @@ public class DetailsActivity extends AppCompatActivity {
 
             Request request = new Request.Builder()
                     .url(imageUrl)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             bmp = BitmapFactory.decodeStream(response.body().byteStream());
 
 

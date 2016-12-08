@@ -6,7 +6,8 @@
     android:id="@+id/app_selection_layout"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:layout_margin="20dp">
 
     <TextView
         android:layout_width="match_parent"
