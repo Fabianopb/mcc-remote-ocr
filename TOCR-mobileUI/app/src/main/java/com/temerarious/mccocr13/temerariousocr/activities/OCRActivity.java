@@ -56,6 +56,7 @@ public class OCRActivity extends AppCompatActivity {
     Button logoutFB;
     Uri imageUri;
     public static BenchmarkResults benchmarkResults;
+    private int tasksTriggered;
 
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
@@ -93,7 +94,7 @@ public class OCRActivity extends AppCompatActivity {
         imgSelectorStatus = (TextView) findViewById(R.id.img_selector_status);
         imgSelectorStatus.setText(getString(R.string.status_no_image));
 
-        logoutFB=(Button) findViewById(R.id.logoutFB);
+        /*logoutFB=(Button) findViewById(R.id.logoutFB);
         logoutFB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -106,7 +107,7 @@ public class OCRActivity extends AppCompatActivity {
         if (MainActivity.login.equals("basicLogin"))
             logoutFB.setVisibility(View.GONE);
         else
-            logoutFB.setVisibility(View.VISIBLE);
+            logoutFB.setVisibility(View.VISIBLE);*/
 
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, type);
@@ -210,7 +211,6 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     private void onSelectFromGalleryResult(Intent data) {
-
         try {
             if(data.getData()!=null){
                 Bitmap bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -309,11 +309,9 @@ public class OCRActivity extends AppCompatActivity {
         prepareRemote.execute(images_total);
     }
 
-    private int tasksTriggered;
     private void runBenchmarkMode() {
         benchmarkResults = new BenchmarkResults();
         benchmarkResults.setNumberOfFiles(imageStream.size());
-
         tasksTriggered = 2;
         runLocalMode(true);
         runRemoteMode(true);
@@ -336,9 +334,6 @@ public class OCRActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
         intent.putExtra("ocr-result", result);
         startActivity(intent);
-
-        //TextView ocrTextView = (TextView) findViewById(R.id.OCRTextView);
-        //ocrTextView.setText(result);
     }
 
 
@@ -384,4 +379,5 @@ public class OCRActivity extends AppCompatActivity {
     public void onBackPressed() {
         finish();
     }
+
 }
