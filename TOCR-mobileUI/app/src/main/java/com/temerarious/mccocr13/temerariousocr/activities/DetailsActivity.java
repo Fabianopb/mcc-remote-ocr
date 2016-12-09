@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,6 +17,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.SaveResultHelper;
 import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
 
 import java.io.IOException;
@@ -30,6 +33,7 @@ public class DetailsActivity extends AppCompatActivity {
 
     private String server_ip = "";
     private String credentials = "";
+    public SaveResultHelper saveResultHelper = new SaveResultHelper(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +45,17 @@ public class DetailsActivity extends AppCompatActivity {
 
         credentials = Credentials.basic(OCRActivity.token, "");
 
-        String ocrText = getIntent().getStringExtra("ocr_text");
+        final String ocrText = getIntent().getStringExtra("ocr_text");
         String[] imagesArray = getIntent().getStringArrayExtra("images_array");
 
         LinearLayout ll = (LinearLayout) findViewById(R.id.details_linear_layout);
+        Button btnSave=(Button) findViewById(R.id.button_save);
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveResultHelper.saveToText(ocrText);
+            }
+        });
 
         TextView msg = new TextView(this);
         msg.setPadding(10, 10, 10, 10);

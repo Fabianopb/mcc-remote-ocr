@@ -192,6 +192,7 @@ public class FacebookFragment extends Fragment{
                     pendingAction = PendingAction.NONE;
                 }
                 updateUI();
+                Toast.makeText(getActivity(), R.string.authentication_failed, Toast.LENGTH_SHORT).show();
 
             }
 

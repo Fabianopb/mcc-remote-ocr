@@ -93,31 +93,19 @@
         android:background="@drawable/button"
         android:onClick="openRecords" />
 
-    <Button
-        android:layout_height="wrap_content"
-        android:layout_width="140dp"
-        android:layout_margin="10dp"
-        android:layout_gravity="center"
-        android:text="@string/save_file"
-        android:id="@+id/button_save"
-        android:background="@drawable/button" />
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
 
-    <com.facebook.login.widget.LoginButton
-        android:layout_height="wrap_content"
-        android:layout_width="140dp"
-        android:layout_margin="10dp"
-        android:layout_gravity="center"
-        android:text="@string/com_facebook_loginview_log_out_button"
-        android:id="@+id/logoutFB" />
+        <com.facebook.login.widget.LoginButton
+            android:layout_height="wrap_content"
+            android:layout_width="140dp"
+            android:layout_margin="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:text="@string/com_facebook_loginview_log_out_button"
+            android:id="@+id/logoutFB" />
+    </RelativeLayout>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:layout_marginBottom="100dp"
-        android:text=""
-        android:id="@+id/OCRTextView"
-        android:textSize="18sp" />
 
 </LinearLayout>

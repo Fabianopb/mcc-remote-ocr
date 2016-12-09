@@ -18,6 +18,7 @@
     <string name="live_preview_link"><u>Preview your image(s)</u></string>
     <string name="toast_no_images">No images selected!</string>
     <string name="test_ocr">Run OCR!</string>
+    <string name="ocr_results"><u>OCR results</u></string>
 
     <string name="show_records">Show records</string>
 
@@ -61,5 +62,7 @@
     <string name="save_file">Save File</string>
     <string name="update">Click your profile image to return to OCR</string>
     <string name="authentication_ok">Authenticated</string>
+    <string name="noInternet">Internet is OFF</string>
+    <string name="internet_off">Internet Connection is turned off. You can use the app only in Local mode</string>
 
 </resources>

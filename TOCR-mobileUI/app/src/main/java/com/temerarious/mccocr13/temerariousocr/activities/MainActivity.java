@@ -4,8 +4,10 @@ package com.temerarious.mccocr13.temerariousocr.activities;
  * Created by ivan on 21.11.16.
  */
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -13,19 +15,27 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.FacebookSdk;
 import com.temerarious.mccocr13.temerariousocr.fragments.FacebookFragment;
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.NetworkChangeReceiver;
 import com.temerarious.mccocr13.temerariousocr.tasks.BasicAuthentication;
 
 public class MainActivity extends AppCompatActivity {
 
     public static String login="";
+    private NetworkChangeReceiver receiver;
+    private boolean isConnected = false;
+    public static String networkStatus="On";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,12 +46,29 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
 
 
+
         if (fragment == null) {
             fragment = new FacebookFragment();
             fm.beginTransaction()
                     .add(R.id.fragment_container, fragment)
                     .commit();
         }
+
+        /*if (isOnline()) {
+// send username:password to database and check is it correct
+            LoginBW loginBW = new LoginBW(FragmentLogin.this, getActivity());
+            loginBW.execute(username, password);
+        } else {
+            Toast.makeText(getActivity(), R.string.noInternet, Toast.LENGTH_SHORT).show();
+        }*/
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(receiver);
 
     }
 
@@ -86,5 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+
 
 }
