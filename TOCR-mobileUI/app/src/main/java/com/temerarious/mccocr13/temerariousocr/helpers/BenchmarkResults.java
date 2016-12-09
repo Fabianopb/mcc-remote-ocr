@@ -68,4 +68,53 @@ public class BenchmarkResults {
         return Math.sqrt(deviation);
     }
 
+    public double getRemoteDeviation() {
+        double deviation = 0;
+        for (int i = 0; i < remoteElapsedTime.length; i++) {
+            deviation += Math.pow((remoteElapsedTime[i] - remoteAverage), 2);
+        }
+        deviation /= remoteAverage;
+        return Math.sqrt(deviation);
+    }
+
+    public int getLocalMaxIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (localElapsedTime[i] > localElapsedTime[i - 1]) {
+                index = i;
+            }
+        }
+        return index + 1;
+    }
+
+    public int getLocalMinIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (localElapsedTime[i] < localElapsedTime[i - 1]) {
+                index = i + 1;
+            }
+        }
+        return index;
+    }
+
+    public int getRemoteMaxIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (remoteElapsedTime[i] > remoteElapsedTime[i - 1]) {
+                index = i;
+            }
+        }
+        return index + 1;
+    }
+
+    public int getRemoteMinIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (remoteElapsedTime[i] < remoteElapsedTime[i - 1]) {
+                index = i + 1;
+            }
+        }
+        return index;
+    }
+
 }

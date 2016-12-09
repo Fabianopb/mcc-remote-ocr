@@ -17,11 +17,14 @@
     <string name="status_img_gallery_2">image(s) from the gallery. Ready to translate?</string>
     <string name="live_preview_link"><u>Preview your image(s)</u></string>
     <string name="toast_no_images">No images selected!</string>
+    <string name="toast_no_source">Source image(s) missing!</string>
     <string name="test_ocr">Run OCR!</string>
-    <string name="ocr_results"><u>OCR results</u></string>
-
+    <string name="images">images</string>
     <string name="show_records">Show records</string>
-
+    <string name="created_at">Created at:\n</string>
+    <string name="ocr_results"><u>OCR results</u></string>
+    <string name="take_new_pic">Retake picture</string>
+    <string name="not_from_camera">The image used was not from the camera!</string>
     <string name="facebook_app_id">349946252046985</string>
 
     <!-- strings for the settings menu -->
@@ -33,7 +36,6 @@
     <!-- strings for the local mode -->
     <string name="running_local_ocr">Translating images locally...</string>
     <string name="local_ocr_error">An error occurred when running the OCR</string>
-    <string name="local_header">LOCAL processing times:</string>
 
     <!-- strings for the remote mode -->
     <string name="remote_dialog">Preparing backend to receive images</string>
@@ -45,6 +47,17 @@
     <!-- strings for the benchmark mode -->
     <string name="running_benchmark">Running benchmark</string>
     <string name="benchmark_error">Something went wrong in the benchmark...</string>
+    <string name="benchmark_results"><u>Benchmark results</u></string>
+    <string name="image_number"><![CDATA[* image #]]></string>
+    <string name="local_header"><![CDATA[<b>LOCAL</b> processing times:<br>]]></string>
+    <string name="remote_header"><![CDATA[<b>REMOTE</b> processing times:<br>]]></string>
+    <string name="total_time_of"><![CDATA[<b>TOTAL</b> time of&nbsp;]]></string>
+    <string name="average_time_of"><![CDATA[<b>AVERAGE</b> time of&nbsp;]]></string>
+    <string name="deviations_time_of"><![CDATA[<b>STANDARD DEVIATION</b> of&nbsp;]]></string>
+    <string name="minimum_time_of"><![CDATA[<b>MIN</b> time on image #]]></string>
+    <string name="maximum_time_of"><![CDATA[<b>MAX</b> time on image #]]></string>
+    <string name="seconds"><![CDATA[&nbsp;seconds<br>]]></string>
+    <string name="linebreak"><![CDATA[<br>]]></string>
 
     <string name="cancelled">Cancelled</string>
     <string name="permission_not_granted">Unable to perform selected action because permissions were not granted.</string>

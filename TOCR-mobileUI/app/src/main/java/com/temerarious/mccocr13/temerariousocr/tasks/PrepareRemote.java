@@ -33,11 +33,13 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
 
     public OCRActivity source = null;
     private Context context;
+    private boolean runningInBenchmark = false;
     //ProgressDialog loading;
 
-    public PrepareRemote(OCRActivity fl, Context ctx) {
+    public PrepareRemote(OCRActivity fl, Context ctx, boolean benchmark) {
         source = fl;
         context = ctx;
+        runningInBenchmark = benchmark;
     }
 
     @Override
@@ -98,7 +100,7 @@ public class PrepareRemote extends AsyncTask<String,Void,String> {
                 String uid = jsonObj.getString("uid");
                 String next_seq = jsonObj.getString("next_seq");
 
-                UploadImages uploadImages = new UploadImages(source, context);
+                UploadImages uploadImages = new UploadImages(source, context, runningInBenchmark);
                 uploadImages.execute(uid, next_seq);
 
             } catch (JSONException e) {

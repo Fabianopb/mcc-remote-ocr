@@ -1,11 +1,16 @@
 package com.temerarious.mccocr13.temerariousocr.activities;
 
+
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,7 +43,7 @@ public class ResultActivity extends AppCompatActivity {
         resultView.setText(ocrResult);
         ll.addView(resultView);
 
-        btnSave=(Button) findViewById(R.id.button_save);
+        btnSave = (Button) findViewById(R.id.button_save);
         btnSave.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -47,6 +52,6 @@ public class ResultActivity extends AppCompatActivity {
         });
 
     }
-
-
 }
+
+

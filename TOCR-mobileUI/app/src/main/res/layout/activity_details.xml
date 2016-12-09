@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,21 +8,42 @@
     android:orientation="vertical"
     tools:context="com.temerarious.mccocr13.temerariousocr.activities.DetailsActivity">
 
+    <TextView
+        android:id="@+id/creation_time_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:background="@color/colorPrimaryDark"
+        android:textColor="@color/primary_text_default_material_dark"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:weightSum="2"
         android:background="@color/colorPrimary">
 
         <Button
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_width="140dp"
+            android:layout_margin="5dp"
+            android:layout_gravity="center"
+            android:text="@string/images"
+            android:id="@+id/button_images"
+            android:background="@drawable/button"
+            android:onClick="showSourceImages"/>
+
+        <Button
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_width="140dp"
             android:layout_margin="5dp"
             android:layout_gravity="center"
             android:text="@string/save_file"
             android:id="@+id/button_save"
-            android:background="@drawable/button" />
+            android:background="@drawable/button"
+            android:onClick="saveTextAsFile"/>
 
     </LinearLayout>
 
@@ -34,18 +56,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textAlignment="center"
-                android:textSize="20sp"
-                android:padding="10dp"
-                android:text="@string/ocr_results"/>
-
-        </LinearLayout>
+            android:padding="20dp"/>
 
     </ScrollView>
 

@@ -62,6 +62,7 @@ public class OCRActivity extends AppCompatActivity {
     public static Spinner spinner;
     public static BenchmarkResults benchmarkResults;
     private NetworkChangeReceiver receiver;
+    private int tasksTriggered;
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
     public static ArrayAdapter<String> adapter;
@@ -256,7 +257,6 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     private void onSelectFromGalleryResult(Intent data) {
-
         try {
             if(data.getData()!=null){
                 Bitmap bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -311,20 +311,26 @@ public class OCRActivity extends AppCompatActivity {
         runLocalOCR.execute();
     }
 
-    public void runRemoteMode(boolean benchmark) {
+    private void runRemoteMode(boolean benchmark) {
         String images_total = String.valueOf(imageStream.size());
-        PrepareRemote prepareRemote = new PrepareRemote(OCRActivity.this, OCRActivity.this);
+        PrepareRemote prepareRemote = new PrepareRemote(this, this, benchmark);
         prepareRemote.execute(images_total);
     }
 
     private void runBenchmarkMode() {
         benchmarkResults = new BenchmarkResults();
         benchmarkResults.setNumberOfFiles(imageStream.size());
-
+        tasksTriggered = 2;
         runLocalMode(true);
+        runRemoteMode(true);
+    }
 
-        //RunBenchmark runBenchmark = new RunBenchmark(OCRActivity.this, OCRActivity.this);
-        //runBenchmark.execute();
+    public void asyncTaskConcluded() {
+        tasksTriggered--;
+        if (tasksTriggered == 0) {
+            Intent intent = new Intent(this, BenchmarkActivity.class);
+            startActivity(intent);
+        }
     }
 
     public void openRecords(View view) {
@@ -337,8 +343,10 @@ public class OCRActivity extends AppCompatActivity {
         intent.putExtra("ocr-result", result);
         startActivity(intent);
 
-
     }
+
+
+
 
 
     @Override
@@ -373,4 +381,5 @@ public class OCRActivity extends AppCompatActivity {
         }
         return false;
     }
+
 }
