@@ -1,7 +1,7 @@
 from pymongo.errors import AutoReconnect
-from pymongo.database import Database
 from pymongo.collection import Collection
 from pymongo import ReturnDocument
+from gridfs import GridFS
 from tornado import gen
 import logging
 
@@ -28,71 +28,72 @@ def retry_on_autoreconnect(f):
 
 
 @retry_on_autoreconnect
-def find_user(db_object, username):
-    if isinstance(db_object, Database):
-        return db_object.users.find_one({'username': username})
-    elif isinstance(db_object, Collection):
-        return db_object.find_one({'username': username})
+def find(collection, query):
+    if isinstance(collection, Collection):
+        return collection.find(query)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def insert_user(db_object, user):
-    if isinstance(db_object, Database):
-        return db_object.users.insert_one(user)
-    elif isinstance(db_object, Collection):
-        return db_object.insert_one(user)
+def find_one(collection, query):
+    if isinstance(collection, Collection):
+        return collection.find_one(query)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def update_user(db_object, username, update):
-    if isinstance(db_object, Database):
-        return db_object.users.update_one({'username': username}, update)
-    elif isinstance(db_object, Collection):
-        return db_object.update_one({'username': username}, update)
+def insert(collection, document):
+    if isinstance(collection, Collection):
+        return collection.insert_one(document)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def find_transaction(db_object, transaction_id):
-    if isinstance(db_object, Database):
-        return db_object.transactions.find_one({'_id': transaction_id})
-    elif isinstance(db_object, Collection):
-        return db_object.find_one({'_id': transaction_id})
+def update(collection, query, update):
+    if isinstance(collection, Collection):
+        return collection.update_one(query, update)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def insert_transaction(db_object, transaction):
-    if isinstance(db_object, Database):
-        return db_object.transactions.insert_one(transaction)
-    elif isinstance(db_object, Collection):
-        return db_object.insert_one(transaction)
+def find_one_and_update(collection, query, update):
+    if isinstance(collection, Collection):
+        return collection.find_one_and_update(query, update, return_document=ReturnDocument.AFTER)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def find_and_update_transaction(db_object, transaction_id, update):
-    if isinstance(db_object, Database):
-        return db_object.transactions.find_one_and_update({'_id': transaction_id}, update,
-                                                          return_document=ReturnDocument.AFTER)
-    elif isinstance(db_object, Collection):
-        return db_object.find_one_and_update({'_id': transaction_id}, update, return_document=ReturnDocument.AFTER)
+def delete(collection, query):
+    if isinstance(collection, Collection):
+        return collection.delete_one(query)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('collection must be of type Collection')
 
 
 @retry_on_autoreconnect
-def delete_transaction(db_object, transaction_id):
-    if isinstance(db_object, Database):
-        return db_object.transactions.delete_one({'_id': transaction_id})
-    elif isinstance(db_object, Collection):
-        return db_object.delete_one(transaction_id)
+def fs_find_one(fs, query):
+    if isinstance(fs, GridFS):
+        return fs.find_one(query)
     else:
-        raise TypeError('db_object must be either Database or Collection')
+        raise TypeError('fs must be of type GridFS')
+
+
+@retry_on_autoreconnect
+def fs_put(fs, data, **kwargs):
+    if isinstance(fs, GridFS):
+        return fs.put(data, **kwargs)
+    else:
+        raise TypeError('fs must be of type GridFS')
+
+
+@retry_on_autoreconnect
+def fs_delete(fs, fs_id):
+    if isinstance(fs, GridFS):
+        return fs.delete(fs_id)
+    else:
+        raise TypeError('fs must be of type GridFS')
