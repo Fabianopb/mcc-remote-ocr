@@ -65,7 +65,7 @@
     <string name="minimum_data_of"><![CDATA[<b>MIN</b> data exchanged on image #]]></string>
     <string name="maximum_data_of"><![CDATA[<b>MAX</b> data exchanged on image #]]></string>
     <string name="seconds"><![CDATA[&nbsp;seconds<br>]]></string>
-    <string name="bytes"><![CDATA[&nbsp;bytes<br>]]></string>
+    <string name="bytes"><![CDATA[&nbsp;kb<br>]]></string>
     <string name="linebreak"><![CDATA[<br>]]></string>
 
     <string name="cancelled">Cancelled</string>

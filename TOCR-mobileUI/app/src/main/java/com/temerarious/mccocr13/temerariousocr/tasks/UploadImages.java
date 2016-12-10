@@ -101,7 +101,7 @@ public class UploadImages extends AsyncTask<String,Void,String> {
             long dEnd = TrafficStats.getUidTxBytes(applicationUID) + TrafficStats.getUidRxBytes(applicationUID);
 
             double tDelta = (tEnd - tStart) / 1000.0;
-            double dDelta = (dEnd - dStart);
+            double dDelta = (dEnd - dStart) / 1024.0;
 
             if (runningInBenchmark) {
                 source.benchmarkResults.setRemoteElapsedTime(imageIndex, tDelta);

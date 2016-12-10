@@ -61,11 +61,11 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         String dataResults = getString(R.string.data_header);
         for (int i = 0; i < OCRActivity.imageStream.size(); i++) {
-            dataResults += getString(R.string.image_number) + String.valueOf(i + 1) + ": " + String.format(Locale.getDefault(), "%.0f", OCRActivity.benchmarkResults.getDataExchanged(i)) + bytes;
+            dataResults += getString(R.string.image_number) + String.valueOf(i + 1) + ": " + String.format(Locale.getDefault(), "%.2f", OCRActivity.benchmarkResults.getDataExchanged(i)) + bytes;
         }
-        dataResults += getString(R.string.total_data_of) + String.format(Locale.getDefault(), "%.0f", OCRActivity.benchmarkResults.getDataExchangedTotal()) + bytes;
-        dataResults += getString(R.string.average_data_of) + String.format(Locale.getDefault(), "%.0f", OCRActivity.benchmarkResults.getDataExchangedAverage()) + bytes;
-        dataResults += getString(R.string.deviations_data_of) + String.format(Locale.getDefault(), "%.0f", OCRActivity.benchmarkResults.getDataExchangedDeviation()) + bytes;
+        dataResults += getString(R.string.total_data_of) + String.format(Locale.getDefault(), "%.2f", OCRActivity.benchmarkResults.getDataExchangedTotal()) + bytes;
+        dataResults += getString(R.string.average_data_of) + String.format(Locale.getDefault(), "%.2f", OCRActivity.benchmarkResults.getDataExchangedAverage()) + bytes;
+        dataResults += getString(R.string.deviations_data_of) + String.format(Locale.getDefault(), "%.2f", OCRActivity.benchmarkResults.getDataExchangedDeviation()) + bytes;
         dataResults += getString(R.string.maximum_data_of) + OCRActivity.benchmarkResults.getDataExchangedMaxIndex() + getString(R.string.linebreak);
         dataResults += getString(R.string.minimum_data_of) + OCRActivity.benchmarkResults.getDataExchangedMinIndex() + getString(R.string.linebreak);
 
