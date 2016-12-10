@@ -49,6 +49,7 @@
     <string name="running_benchmark">Running benchmark</string>
     <string name="benchmark_error">Something went wrong in the benchmark...</string>
     <string name="benchmark_results"><u>Benchmark results</u></string>
+    <string name="total_processed_images"><![CDATA[Total images processed:&nbsp;]]></string>
     <string name="image_number"><![CDATA[* image #]]></string>
     <string name="local_header"><![CDATA[<b>LOCAL</b> processing times:<br>]]></string>
     <string name="remote_header"><![CDATA[<b>REMOTE</b> processing times:<br>]]></string>

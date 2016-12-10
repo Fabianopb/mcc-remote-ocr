@@ -23,6 +23,10 @@ public class BenchmarkResults {
         numberOfFiles = files;
     }
 
+    public int getNumberOfFiles() {
+        return numberOfFiles;
+    }
+
     public void setLocalElapsedTime(int position, double time) {
         localElapsedTime[position] = time;
     }

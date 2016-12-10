@@ -19,11 +19,17 @@ public class BenchmarkActivity extends AppCompatActivity {
         
         String seconds = getString(R.string.seconds);
         String bytes = getString(R.string.bytes);
+        String linebreak = getString(R.string.linebreak);
 
         LinearLayout ll = (LinearLayout) findViewById(R.id.benchmark_linear_layout);
 
         int indexMax, indexMin;
         double maxValue = 0, minValue;
+
+        String totalProcessedImages = getString(R.string.total_processed_images) + String.valueOf(OCRActivity.benchmarkResults.getNumberOfFiles()) + linebreak;
+        TextView totalImagesView = new TextView(this);
+        totalImagesView.setText(Html.fromHtml(totalProcessedImages));
+        ll.addView(totalImagesView);
 
         String localResults = getString(R.string.local_header);
         for (int i = 0; i < OCRActivity.imageStream.size(); i++) {
