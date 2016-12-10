@@ -395,7 +395,6 @@ class UploadImageHandler(RequestHandler):
                 'image_fs_ids': transaction['image_fs_ids'],
                 'ocr_text': ocr_result
             }
-            logging.debug(record)
             # TODO: Error handling and cleanup if database update fails
             # Update user document in DB
             yield db_safe.update(db.users, {'username': username}, {'$push': {'records': record}})
@@ -404,11 +403,12 @@ class UploadImageHandler(RequestHandler):
 
             # Respond with the final combined text from OCR
             response = yield generate_json_message("OCR finished", uid, 0, ocr_result=ocr_result)
+            logging.debug('Response: ' + str(response))
             self.write(response)
         else:
             # If more images are expected, respond with the expected seq number
             response = yield generate_json_message('Image processed', uid, seq + 1)
-            logging.debug(response)
+            logging.debug('Response: ' + str(response))
             self.write(response)
 
 

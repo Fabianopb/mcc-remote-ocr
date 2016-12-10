@@ -39,6 +39,8 @@ echo 'Authenticating to Google Cloud and pushing Docker container...'
 
 chown -R ${USER} ~/.config
 gcloud auth activate-service-account tt-822@mcc-2016-g13-p2.iam.gserviceaccount.com --key-file=./key/mcc-2016-g13-p2-94921abc7259.json
+gcloud config set compute/zone $GCLOUD_ZONE
+gcloud config set project $PROJECT_ID
 gcloud docker -- push eu.gcr.io/$PROJECT_ID/backend:v1
 
 RESULT=$?
@@ -52,7 +54,6 @@ fi
 
 echo 'Setting up cluster...'
 
-gcloud config set compute/zone $GCLOUD_ZONE
 gcloud container clusters create backend
 gcloud config set container/use_client_certificate True
 gcloud container clusters get-credentials backend
