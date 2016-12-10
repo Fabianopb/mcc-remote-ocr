@@ -21,14 +21,14 @@ import requests
 import pprint
 import db_safe
 from helpers import perform_ocr_and_store, get_next_seq, generate_json_message, respond_and_log_error, \
-    JSONDateTimeEncoder
+    JSONDateTimeEncoder, create_user
 
 # App settings
 SOURCE_IMAGE_LIFETIME = 7  # How many days source images are stored in DB
 TRANSACTION_LIFETIME = 60  # How many minutes unfinished transactions are stored in DB
 DB_CLEANUP_INTERVAL = 3600  # How many seconds to wait between database cleanup runs
 
-DB_CONNECT_STRING = 'mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017'
+DB_CONNECT_STRING = 'mongodb://mongo-1:27017'#,mongo-2:27017,mongo-3:27017'
 
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
@@ -160,12 +160,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
         user = db.users.find_one({'username': username})
         if user is None:
             logging.debug('Adding to DB')
-            user = {
-                'username': username,
-                'password': FB_NO_PASS,  # FB users cannot be authorised locally
-                'records': []
-            }
-            db.users.insert_one(user)
+            db.users.insert_one(create_user(username, FB_NO_PASS))
             logging.debug('Added to DB')
 
         token = generate_auth_token(username)
@@ -199,13 +194,8 @@ class AddUserHandler(RequestHandler):
     def post(self):
         username = self.get_body_argument('username')
         password = self.get_body_argument('password')
-        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-        user = {
-            'username': username,
-            'password': hashed_password,
-            'records': []
-        }
-        db.users.insert_one(user)
+
+        db.users.insert_one(create_user(username, password))
 
         self.write('OK')
 
@@ -213,15 +203,10 @@ class AddUserHandler(RequestHandler):
 class AddTestuserHandler(RequestHandler):
     @gen.coroutine
     def get(self):
-        user = 'testuser'
+        username = 'testuser'
         password = 'time2work'
-        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-        user = {
-            'username': user,
-            'password': hashed_password,
-            'records': []
-        }
-        db.users.insert_one(user)
+
+        db.users.insert_one(create_user(username, password))
         self.write('OK')
 
 
@@ -412,6 +397,19 @@ class UploadImageHandler(RequestHandler):
             self.write(response)
 
 
+# Initializes the database by creating some users
+def database_init():
+    db.users.create_index('username', unique=True)
+    users = [{'username': 'test1', 'password': 'secret1'},
+             {'username': 'test2', 'password': 'secret2'},
+             {'username': 'test3', 'password': 'secret3'}]
+    for user in users:
+        result = db.users.find_one({'username': user['username']})
+        if result is None:
+            db.users.insert(create_user(**user))
+    logging.info("Database initialized")
+
+
 # Removes source images older than SOURCE_IMAGE_LIFETIME from the database
 @gen.coroutine
 def database_cleanup():
@@ -493,8 +491,10 @@ def start_tornado():
         logging.error('Connection to MongoDB server failed, exiting')
         return
 
+    # Initialize database
     global db
     db = mongo_client.userdata
+    database_init()
 
     # Initialize GridFS
     try:

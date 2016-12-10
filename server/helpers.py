@@ -2,6 +2,7 @@ from tornado import gen
 import logging
 import json
 import datetime
+import hashlib
 from PIL import Image
 import pytesseract
 from unidecode import unidecode
@@ -110,3 +111,13 @@ class JSONDateTimeEncoder(json.JSONEncoder):
             return str(obj)
         else:
             return json.JSONEncoder.default(self, obj)
+
+
+# Creates and returns a user document from the given username and password
+def create_user(username, password):
+    user = {
+        'username': username,
+        'password': hashlib.sha256(password.encode('utf-8')).hexdigest(),
+        'records': []
+    }
+    return user
