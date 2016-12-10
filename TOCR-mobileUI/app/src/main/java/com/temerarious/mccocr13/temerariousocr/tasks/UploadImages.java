@@ -149,6 +149,7 @@ public class UploadImages extends AsyncTask<String,Void,String> {
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());
+                Toast.makeText(context, R.string.json_error, Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(context, R.string.remote_failed, Toast.LENGTH_SHORT).show();

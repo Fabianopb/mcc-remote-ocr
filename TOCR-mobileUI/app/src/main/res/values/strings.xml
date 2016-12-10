@@ -26,6 +26,7 @@
     <string name="take_new_pic">Retake picture</string>
     <string name="not_from_camera">The image used was not from the camera!</string>
     <string name="saved">Text file saved successfully!</string>
+    <string name="json_error">OCR could not translate your image properly</string>
     <string name="facebook_app_id">349946252046985</string>
 
     <!-- strings for the settings menu -->
