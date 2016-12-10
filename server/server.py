@@ -28,7 +28,7 @@ SOURCE_IMAGE_LIFETIME = 7  # How many days source images are stored in DB
 TRANSACTION_LIFETIME = 60  # How many minutes unfinished transactions are stored in DB
 DB_CLEANUP_INTERVAL = 3600  # How many seconds to wait between database cleanup runs
 
-DB_CONNECT_STRING = 'mongodb://mongo-1:27017'#,mongo-2:27017,mongo-3:27017'
+DB_CONNECT_STRING = 'mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017'
 
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
