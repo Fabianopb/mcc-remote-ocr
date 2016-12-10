@@ -25,6 +25,7 @@
     <string name="ocr_results"><u>OCR results</u></string>
     <string name="take_new_pic">Retake picture</string>
     <string name="not_from_camera">The image used was not from the camera!</string>
+    <string name="saved">Text file saved successfully!</string>
     <string name="facebook_app_id">349946252046985</string>
 
     <!-- strings for the settings menu -->

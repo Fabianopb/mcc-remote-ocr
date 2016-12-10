@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Environment;
 import android.widget.Toast;
 
+import com.temerarious.mccocr13.temerariousocr.R;
 import com.temerarious.mccocr13.temerariousocr.activities.DetailsActivity;
 import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 import com.temerarious.mccocr13.temerariousocr.activities.ResultActivity;
@@ -27,20 +28,25 @@ public class SaveResultHelper {
 
     public void saveToText(String text) {
         try {
-            File myFile = new File(Environment.getExternalStorageDirectory().getPath(), "OCR_result_"+System.currentTimeMillis() + ".txt");
+
+            String storagePath = Environment.getExternalStorageDirectory().getPath() + "/G13OCR/";
+            File myDir = new File(storagePath);
+            myDir.mkdirs();
+
+            String filename = "OCR_result_"+System.currentTimeMillis() + ".txt";
+            File myFile = new File(storagePath, filename);
             myFile.createNewFile();
+
             FileOutputStream fOut = new FileOutputStream(myFile);
-            OutputStreamWriter myOutWriter =
-                    new OutputStreamWriter(fOut);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
             myOutWriter.append(text);
             myOutWriter.close();
             fOut.close();
-            Toast.makeText(context,
-                    "Saved",
-                    Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(context, context.getString(R.string.saved), Toast.LENGTH_SHORT).show();
+
         } catch (Exception e) {
-            Toast.makeText(context, e.getMessage(),
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 }
