@@ -3,6 +3,8 @@
 PROJECT_ID="mcc-2016-g13-p2"
 GCLOUD_ZONE="europe-west1-c"
 
+echo 'Deploying the backend service as a Google Container Engine cluster.'
+echo 'NOTE: THIS WILL TAKE A WHILE!'
 
 echo 'Installing dependencies...'
 
@@ -20,17 +22,15 @@ else
 fi
 
 
-echo 'Setting up Docker and building container...'
+echo 'Building docker container...'
 
-gpasswd -a ${USER} docker
-newgrp docker
 docker build -t eu.gcr.io/$PROJECT_ID/backend:v1 .
 
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
     echo 'Docker container set up successfully.'
 else
-    (>&2 echo 'ERROR: Docker container could not be set up.')
+    (>&2 echo 'ERROR: Docker container could not be built.')
     exit $RESULT
 fi
 
@@ -56,9 +56,40 @@ gcloud config set compute/zone $GCLOUD_ZONE
 gcloud container clusters create backend
 gcloud config set container/use_client_certificate True
 gcloud container clusters get-credentials backend
+
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+    echo 'Initial cluster setup successful.'
+else
+    (>&2 echo 'ERROR: Initial cluster setup failed.')
+    exit $RESULT
+fi
+
+
+echo 'Setting up MongoDB replica set...'
+
 make -C cluster/sidecar/ add-replica
+echo 'Waiting 1 minute for db container 1 to initialize...'
+sleep 60
 make -C cluster/sidecar/ add-replica
+echo 'Waiting 1 minute for db container 2 to initialize...'
+sleep 60
 make -C cluster/sidecar/ add-replica
+echo 'Waiting 1 minute for db container 3 to initialize...'
+sleep 60
+
+
+RESULT=$?
+if [ $RESULT -eq 0 ]; then
+    echo 'MongoDB replica set created successfully.'
+else
+    (>&2 echo 'ERROR: MongoDB replica set creation failed.')
+    exit $RESULT
+fi
+
+
+echo 'Setting up backend application cluster...'
+
 kubectl create -f cluster/backend.yaml
 
 RESULT=$?
