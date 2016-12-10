@@ -12,7 +12,19 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="center"
-        android:background="@color/colorPrimary">
+        android:background="@color/colorPrimary"
+        android:weightSum="2">
+
+        <Button
+            android:layout_height="wrap_content"
+            android:layout_width="140dp"
+            android:layout_margin="5dp"
+            android:layout_gravity="center"
+            android:text="@string/take_new_pic"
+            android:id="@+id/button_retake"
+            android:background="@drawable/button"
+            android:layout_weight="1"
+            android:onClick="retakePicture"/>
 
         <Button
             android:layout_height="wrap_content"
@@ -21,7 +33,8 @@
             android:layout_gravity="center"
             android:text="@string/save_file"
             android:id="@+id/button_save"
-            android:background="@drawable/button" />
+            android:background="@drawable/button"
+            android:layout_weight="1"/>
 
     </LinearLayout>
 

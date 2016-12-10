@@ -52,6 +52,16 @@ public class ResultActivity extends AppCompatActivity {
         });
 
     }
+
+    public void retakePicture(View view) {
+        if(OCRActivity.imageTakenFromCamera) {
+            OCRActivity.retakePictureOnResume = true;
+            finish();
+        } else {
+            Toast.makeText(this, getString(R.string.not_from_camera), Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }
 
 

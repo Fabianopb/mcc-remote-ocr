@@ -67,6 +67,8 @@ public class OCRActivity extends AppCompatActivity {
     public ArrayList<String> imageName = new ArrayList<String>();
     public static ArrayList<byte[]> imageStream = new ArrayList<byte[]>();
     public static ArrayAdapter<String> adapter;
+    public static boolean imageTakenFromCamera = false;
+    public static boolean retakePictureOnResume = false;
 
 
     @Override
@@ -222,6 +224,7 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     private void onCaptureImageResult(Uri uri) throws IOException {
+        imageTakenFromCamera = true;
         InputStream is = null;
 
         try {
@@ -262,6 +265,7 @@ public class OCRActivity extends AppCompatActivity {
     }
 
     private void onSelectFromGalleryResult(Intent data) {
+        imageTakenFromCamera = false;
         try {
             if(data.getData()!=null){
                 Bitmap bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -381,6 +385,13 @@ public class OCRActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        retakePictureOnResume = false;
+        select_from_camera();
     }
 
 }
