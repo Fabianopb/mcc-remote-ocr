@@ -57,7 +57,8 @@ public class OCRActivity extends AppCompatActivity {
     String[] type = {"Local", "Remote", "Benchmark"};
     String selectedMode = type[0];
     ImageView imgCamera, imgGalery;
-    public static Button logoutFB, button_records;
+    public static Button button_records;
+    public static Button logoutFB;
     Uri imageUri;
     public static Spinner spinner;
     public static BenchmarkResults benchmarkResults;
@@ -101,6 +102,7 @@ public class OCRActivity extends AppCompatActivity {
         imgSelectorStatus = (TextView) findViewById(R.id.img_selector_status);
         imgSelectorStatus.setText(getString(R.string.status_no_image));
 
+
         logoutFB=(Button) findViewById(R.id.logoutFB);
         logoutFB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +112,7 @@ public class OCRActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
+        String hui=MainActivity.login;
         if (MainActivity.login.equals("basicLogin"))
             logoutFB.setVisibility(View.GONE);
         else

@@ -13,6 +13,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
 import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
@@ -50,6 +51,8 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                             isConnected = true;
                             OCRActivity.button_records.setVisibility(View.VISIBLE);
                             OCRActivity.logoutFB.setVisibility(View.VISIBLE);
+                            if (MainActivity.login.equals("basicLogin"))
+                                OCRActivity.logoutFB.setVisibility(View.GONE);
                             adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, type);
                             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                             spinner.setAdapter(adapter);
