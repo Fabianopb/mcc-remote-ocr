@@ -1,17 +1,13 @@
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
-from pymongo import ReturnDocument
+from pymongo import MongoClient
 from tornado.web import RequestHandler
 from tornado import gen
-from pymongo import MongoClient
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from bson.codec_options import CodecOptions
 import hashlib
-from PIL import Image
-import pytesseract
-from io import BytesIO
 from gridfs import GridFS
 import datetime
 import tornado.options
@@ -23,42 +19,57 @@ import json
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 import requests
 import pprint
+import db_safe
+from helpers import perform_ocr_and_store, get_next_seq, generate_json_message, respond_and_log_error, \
+    JSONDateTimeEncoder
 
-THUMBNAIL_SIZE = 128, 128
-SOURCE_IMAGE_LIFETIME = 7
+# App settings
+SOURCE_IMAGE_LIFETIME = 7  # How many days source images are stored in DB
+TRANSACTION_LIFETIME = 60  # How many minutes unfinished transactions are stored in DB
+DB_CLEANUP_INTERVAL = 3600  # How many seconds to wait between database cleanup runs
+
+DB_CONNECT_STRING = 'mongodb://mongo-1:27017'
 
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
 
 APP_FB_TOKEN = '349946252046985|lJ9EY8Rs_63dP6I7ei0liQlEybQ'
-FB_SUFFIX = "@facebook.com"
-FB_NO_PASS = "FB account"
+FB_SUFFIX = '@facebook.com'
+FB_NO_PASS = 'FB account'
 
-def verify_password(userToken, password):
-    user = verify_auth_token(userToken)
+# Global variables
+mongo_client = None
+db = None
+fs = None
+
+
+def verify_password(user_token, password):
+    # TODO: Safe db operations
+    user = verify_auth_token(user_token)
     if user:  # User from token
         return user
     else:
-        if userToken.endswith(FB_SUFFIX): #FB account; cannot be authorised this way
-            return userToken
+        if user_token.endswith(FB_SUFFIX):  # FB account; cannot be authorised this way
+            return user_token
 
-        userEntry = db.users.find_one({"username": userToken})
+        user_entry = db.users.find_one({"username": user_token})
 
-        if userEntry is not None:
-            if hashlib.sha256(password.encode('utf-8')).hexdigest() == userEntry.get('password'):
-                user = userEntry.get('username')
+        if user_entry is not None:
+            if hashlib.sha256(password.encode('utf-8')).hexdigest() == user_entry.get('password'):
+                user = user_entry.get('username')
                 return user
 
     return None
 
 
 def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
-    print("Token generated for", user)
+    logging.debug('Token generated for', user)
     s = Serializer(SECRET_KEY, expires_in=expiration)
     return s.dumps({'id': user})
 
 
 def verify_auth_token(token):
+    # TODO: Safe db operations
     s = Serializer(SECRET_KEY)
     try:
         data = s.loads(token)
@@ -66,9 +77,11 @@ def verify_auth_token(token):
         return None  # valid token, but expired
     except BadSignature:
         return None  # invalid token
+    username = data['id']
 
-    if db.users.find_one({"username": data['id']}) is not None or data['id'].endswith(FB_SUFFIX):
-        return data['id']
+    user = db.users.find_one({"username": username})
+    if user is not None or username.endswith(FB_SUFFIX):
+        return username
     else:
         return None
 
@@ -108,22 +121,24 @@ def requireAuthentication(auth):
 class TokenHandler(tornado.web.RequestHandler):
     @requireAuthentication(verify_password)
     def get(self, username):
-        print('Token for user: ' + str(username))
+        logging.debug('Token for user: ' + str(username))
 
         token = generate_auth_token(username)
 
         self.write(json.dumps({'token': token.decode('ascii')}))
-        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+
 
 class FBTokenHandler(tornado.web.RequestHandler):
+    # TODO: Make this asynchronous
     def get(self):
         userToken = self.get_argument('token')
 
         # Verify userToken by FB
         r = requests.get('https://graph.facebook.com/debug_token?input_token='
-                + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
-        
-        #if r.status_code != requests.codes.ok:
+                         + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
+
+        # if r.status_code != requests.codes.ok:
         if r.status_code != 200:
             respond_and_log_error(self, 401, 'Authentication failed')
             return
@@ -142,20 +157,20 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
-        print('Adding to DB')
-        if db.users.find_one({"user_name": username}) is None:
+        user = db.users.find_one({'username': username})
+        if user is None:
+            logging.debug('Adding to DB')
             user = {
-                'user_name': username,
-                'password': FB_NO_PASS, # FB users cannot be authorised locally
+                'username': username,
+                'password': FB_NO_PASS,  # FB users cannot be authorised locally
                 'records': []
             }
             db.users.insert_one(user)
+            logging.debug('Added to DB')
 
-        print('Added to DB')
         token = generate_auth_token(username)
 
-
-        #self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
+        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
@@ -174,11 +189,12 @@ class MainHandler(RequestHandler):
 class DbTestHandler(RequestHandler):
     def get(self):
         logging.debug(self.request)
-        self.write(client.server_info())
+        self.write(mongo_client.server_info())
 
 
 # Test function for adding users to the DB
 class AddUserHandler(RequestHandler):
+    @gen.coroutine
     def post(self):
         username = self.get_body_argument('username')
         password = self.get_body_argument('password')
@@ -194,6 +210,7 @@ class AddUserHandler(RequestHandler):
 
 
 class AddTestuserHandler(RequestHandler):
+    @gen.coroutine
     def get(self):
         user = 'testuser'
         password = 'time2work'
@@ -208,8 +225,9 @@ class AddTestuserHandler(RequestHandler):
 
 
 class GetTestuserHandler(RequestHandler):
+    @gen.coroutine
     def get(self):
-        user = db.users.find_one({"username": 'testuser'})
+        user = yield db_safe.find_one(db.users, {'username': 'testuser'})
         self.write(user.get['username'])
 
 
@@ -218,12 +236,13 @@ class GetRecordsHandler(RequestHandler):
     Gets a given amount of OCR records from the database and returns the data as JSON
     """
 
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def get(self):
+    def get(self, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         # TODO: Implement authentication
-        username = 'test'
         try:
             amount = int(self.get_query_argument('amount'))
         except tornado.web.MissingArgumentError:
@@ -234,7 +253,7 @@ class GetRecordsHandler(RequestHandler):
             tz_aware=True,
             tzinfo=timezone('Europe/Helsinki')))
 
-        user = users_tz.find_one({'username': username})
+        user = yield db_safe.find_one(users_tz, {'username': username})
         records = {'records': user['records'][-amount:]}
 
         self.write(json.dumps(records, cls=JSONDateTimeEncoder))
@@ -245,8 +264,10 @@ class GetImageHandler(RequestHandler):
     Gets an image from the GridFS database.
     """
 
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def get(self, slug):
+    def get(self, slug, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         # Check that slug is a valid ObjectId
@@ -256,20 +277,31 @@ class GetImageHandler(RequestHandler):
             respond_and_log_error(self, 404, 'Malformed image ID')
             return
 
+        # user = yield db_safe.find_user(db, 'testuser')
+
+        # try:
+        #     if not any(record['image_fs_ids']['thumbnail_fs_id'] == slug for record in user['records']):
+        #         if not any(record['image_fs_ids']['image_fs_id'] == slug for record in user['records']):
+        #             respond_and_log_error(self, 403, 'No permission to access image')
+        #             return
+        # except KeyError:
+        #     respond_and_log_error(self, 404, 'No such image in database')
+        #     return
+
         # Check that image exists in GridFS
-        image = fs.find_one({'_id': fs_id})
+        image = yield db_safe.fs_find_one(fs, {'_id': fs_id})
         if image is None:
             respond_and_log_error(self, 404, 'No such image in database')
             return
 
-        self.set_header("Content-type", image.content_type)
+        print(str(image))
+        # Check that user has permission to access the image
+        if username != image.username:
+            print('wtf')
+            respond_and_log_error(self, 403, 'No permission to access image')
+            return
+        self.set_header('Content-type', image.content_type)
         self.write(image.read())
-
-
-# Test function for running OCR on test.jpg
-class OCRTestHandler(RequestHandler):
-    def get(self):
-        self.write(pytesseract.image_to_string(Image.open('test.jpg')))
 
 
 class OCRHandler(RequestHandler):
@@ -277,22 +309,23 @@ class OCRHandler(RequestHandler):
     Registers a new transaction in the database, which is used for monitoring image uploads.
     """
 
-    def post(self):
-        # TODO: Implement authentication
-        username = 'test'
-
+    @requireAuthentication(verify_password)
+    @gen.coroutine
+    def post(self, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
 
         images_total = int(self.get_body_argument('images_total'))
-        result = db.transactions.insert_one({
+        transaction = {
             'username': username,
             'creation_time': datetime.datetime.utcnow(),
             'images_total': images_total,
             'seq': 0,
             'ocr': [],
             'image_fs_ids': []
-        })
-        response = generate_json_message('Ready for upload', str(result.inserted_id), 1)
+        }
+        result = yield db_safe.insert(db.transactions, transaction)
+        response = yield generate_json_message('Ready for upload', str(result.inserted_id), 1)
         self.write(response)
 
 
@@ -301,25 +334,27 @@ class UploadImageHandler(RequestHandler):
     Handles individual image uploads and updates the user's records, when last image of a transaction is uploaded.
     """
 
+    @requireAuthentication(verify_password)
     @gen.coroutine
-    def post(self):
-        # TODO: Implement authentication
-        username = 'test'
+    def post(self, username):
+        logging.debug('User: ' + username)
         logging.debug(self.request)
+
         # Check that UID is a valid ObjectId
         try:
             uid = ObjectId(self.get_body_argument('uid'))
         except InvalidId:
-            response = generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
+            response = yield generate_json_message('Malformed UID', self.get_body_argument('uid'), 0)
             respond_and_log_error(self, 400, response)
             return
 
         seq = int(self.get_body_argument('seq'))
+        next_seq = yield get_next_seq(db, uid)
 
         # Check that transaction exists in database
-        transaction = db.transactions.find_one({'_id': uid})
+        transaction = yield db_safe.find_one(db.transactions, {'_id': uid})
         if transaction is None:
-            response = generate_json_message('No such UID in database', uid, 0)
+            response = yield generate_json_message('No such UID in database', uid, 0)
             respond_and_log_error(self, 400, response)
             return
 
@@ -327,28 +362,30 @@ class UploadImageHandler(RequestHandler):
         try:
             image = self.request.files['image'][0]
         except LookupError:
-            response = generate_json_message('No image in request', uid, get_next_seq(uid))
+            response = yield generate_json_message('No image in request', uid, next_seq)
             respond_and_log_error(self, 400, response)
             return
 
-        # Check that the uploaded image has the expected seq number
-        if seq != get_next_seq(uid):
-            response = generate_json_message('Incorrect upload order', uid, get_next_seq(uid))
-            respond_and_log_error(self, 400, response)
-            return
+        if len(transaction['image_fs_ids']) < transaction['images_total']:
+            # Check that the uploaded image has the expected seq number
+            if seq != next_seq:
+                response = yield generate_json_message('Incorrect upload order', uid, next_seq)
+                respond_and_log_error(self, 400, response)
+                return
 
-        # Perform OCR and store image and its thumbnail in GridFS
-        ocr_text, image_fs_id, thumbnail_fs_id = yield perform_ocr_and_store(image)
-        image_fs_ids = {
-            'image_fs_id': image_fs_id,
-            'thumbnail_fs_id': thumbnail_fs_id
-        }
+            # Perform OCR and store image and its thumbnail in GridFS
+            ocr_text, image_fs_id, thumbnail_fs_id = yield perform_ocr_and_store(fs, image, username)
+            image_fs_ids = {
+                'image_fs_id': image_fs_id,
+                'thumbnail_fs_id': thumbnail_fs_id
+            }
 
-        # Update transaction document in DB
-        transaction = db.transactions.find_one_and_update({'_id': uid}, {'$set': {'seq': seq}, '$push': {
-            'ocr': ocr_text,
-            'image_fs_ids': image_fs_ids
-        }}, return_document=ReturnDocument.AFTER)
+            # Update transaction document in DB
+            transaction = yield db_safe.find_one_and_update(db.transactions, {'_id': uid},
+                                                            {'$set': {'seq': seq}, '$push': {
+                                                                'ocr': ocr_text,
+                                                                'image_fs_ids': image_fs_ids
+                                                            }})
 
         # If this was the last expected image, do final processing
         if seq == transaction['images_total']:
@@ -361,100 +398,70 @@ class UploadImageHandler(RequestHandler):
             logging.debug(record)
             # TODO: Error handling and cleanup if database update fails
             # Update user document in DB
-            db.users.update_one({"username": username}, {'$push': {'records': record}})
+            yield db_safe.update(db.users, {'username': username}, {'$push': {'records': record}})
             # Delete transaction document from DB
-            db.transactions.delete_one({'_id': uid})
+            yield db_safe.delete(db.transactions, {'_id': uid})
 
             # Respond with the final combined text from OCR
-            response = generate_json_message("OCR finished", uid, 0, ocr_result=ocr_result)
+            response = yield generate_json_message("OCR finished", uid, 0, ocr_result=ocr_result)
             self.write(response)
         else:
             # If more images are expected, respond with the expected seq number
-            response = generate_json_message('Image processed', uid, seq + 1)
+            response = yield generate_json_message('Image processed', uid, seq + 1)
             logging.debug(response)
             self.write(response)
 
 
+# Removes source images older than SOURCE_IMAGE_LIFETIME from the database
 @gen.coroutine
-def perform_ocr_and_store(image):
-    """
-    Performs Tesseract OCR processing on the given image, creates a thumbnail and stores the image and its
-    thumbnail to the database using GridFS.
+def database_cleanup():
+    while True:
+        logging.info(
+            'Cleaning up source images older than ' + str(SOURCE_IMAGE_LIFETIME) + ' days from database...')
+        now = datetime.datetime.utcnow()
+        source_lifetime_limit = now - datetime.timedelta(days=SOURCE_IMAGE_LIFETIME)
+        transaction_lifetime_limit = now - datetime.timedelta(minutes=TRANSACTION_LIFETIME)
 
-    Returns OCR results and Object ID:s to the GridFS files.
+        # Find users from db, who have outdated and uncleaned records
+        users = yield db_safe.find(db.users, {
+            '$and': [{'records.creation_time': {'$lt': source_lifetime_limit}},
+                     {'records.cleaned': {'$in': [None, False]}}]
+        })
+        for user in users:
+            for record in user['records']:
+                # Find records which are older than limit
+                if record['creation_time'] < source_lifetime_limit and 'cleaned' not in record:
+                    for image in record['image_fs_ids']:
+                        # Get source image ID and remove it from the record
+                        image_fs_id = image.pop('image_fs_id', None)
+                        if image_fs_id is not None:
+                            # Delete image from GridFS
+                            yield db_safe.fs_delete(fs, image_fs_id)
+                            logging.info('Deleted image from GridFS: ' + str(image_fs_id))
+                    record['cleaned'] = True
+            # Update the user's records array
+            yield db_safe.update(db.users, {'username': user['username']}, {'$set': {'records': user['records']}})
+            logging.info("Cleaned up records for user: " + user['username'])
 
-    :param image: Image to process as a Tornado File from a multipart/form-data request.
-    :return: OCR result text, original image's ID in GridFS, thumbnail's ID in GridFS
-    """
-    logging.debug('Processing ' + image['filename'])
-    pil_image = Image.open(BytesIO(image['body']))
-    ocr_text = pytesseract.image_to_string(pil_image)
-    thumbnail = create_thumbnail(pil_image)
-    image_fs_id = fs.put(image['body'], content_type=image['content_type'], filename=image['filename'])
-    thumbnail_fs_id = fs.put(thumbnail, content_type='image/jpeg', filename='t_' + image['filename'])
-    return ocr_text, image_fs_id, thumbnail_fs_id
+        # Find transactions which are older than limit
+        logging.info(
+            'Cleaning up transactions older than ' + str(TRANSACTION_LIFETIME) + ' minutes from database...')
+        transactions = yield db_safe.find(db.transactions, {'creation_time': {'$lt': transaction_lifetime_limit}})
+        for transaction in transactions:
+            for images in transaction['image_fs_ids']:
+                # Find GridFS ids for images in the transaction
+                for key, image_fs_id in images.items():
+                    # Delete image from GridFS
+                    yield db_safe.fs_delete(fs, image_fs_id)
+                    logging.info('Deleted image from GridFS: ' + str(image_fs_id))
+            # Delete transaction document from DB
+            yield db_safe.delete(db.transactions, {'_id': transaction['_id']})
+            logging.info("Deleted transaction: " + str(transaction['_id']))
 
+        logging.info('Database cleanup complete')
 
-def create_thumbnail(image):
-    """
-    Creates a thumbnail of the PIL image given as a parameter, and returns it as a byte array in JPEG format.
-
-    :param image: PIL image for thumbnail creation
-    :return: Thumbnail as a byte array in JPEG format
-    """
-    image.thumbnail(THUMBNAIL_SIZE)
-    thumbnail_bytes = BytesIO()
-    image.save(thumbnail_bytes, format='JPEG')
-    return thumbnail_bytes.getvalue()
-
-
-def get_next_seq(transaction_id):
-    """
-    Returns the sequence number of the next expected image for a transaction.
-
-    :param transaction_id: The transaction document's ObjectID
-    :return: Next expected seq number
-    """
-    transaction = db.transactions.find_one({'_id': transaction_id})
-    return transaction['seq'] + 1
-
-
-def generate_json_message(message, transaction_id, next_seq, ocr_result=''):
-    """
-    Generates a JSON formatted string for responses.
-
-    :param message:
-    :param transaction_id:
-    :param next_seq:
-    :param ocr_result:
-    :return:
-    """
-    msg = {
-        'uid': str(transaction_id),
-        'message': message,
-        'next_seq': next_seq,
-        'ocr_result': ocr_result
-    }
-    return msg
-
-
-# Logs and responds with the given error code and message
-def respond_and_log_error(request, error_code, msg):
-    request.set_status(error_code)
-    logging.debug("Error response: " + str(msg))
-    request.finish(msg)
-    return
-
-
-# JSONEncoder, which outputs date and datetime in ISO-format and ObjectID as hex string
-class JSONDateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            return obj.isoformat()
-        elif isinstance(obj, (ObjectId)):
-            return str(obj)
-        else:
-            return json.JSONEncoder.default(self, obj)
+        # Wait in the background for the specified interval
+        yield gen.sleep(DB_CLEANUP_INTERVAL)
 
 
 # URL routes etc.
@@ -468,12 +475,46 @@ def make_app():
         (r'/add_user/', AddUserHandler),
         (r'/get_testuser/', AddTestuserHandler),
         (r'/add_testuser/', AddTestuserHandler),
-        (r'/test_ocr/', OCRTestHandler),
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),
         (r'/records/', GetRecordsHandler),
         (r'/image/([^/]+)', GetImageHandler),
     ])
+
+
+def start_tornado():
+    logging.info('Starting backend server')
+
+    # Initialize database connection
+    logging.info('MongoDB URI: %s' % DB_CONNECT_STRING)
+    global mongo_client
+    mongo_client = MongoClient(DB_CONNECT_STRING)
+    if mongo_client is None:
+        logging.error('Connection to MongoDB server failed, exiting')
+        return
+
+    global db
+    db = mongo_client.userdata
+
+    # Initialize GridFS
+    try:
+        global fs
+        fs = GridFS(db)
+    except TypeError:
+        logging.error('Error loading database, exiting')
+        return
+
+    http_server = tornado.httpserver.HTTPServer(app)
+    http_server.listen(80)
+
+    https_server = tornado.httpserver.HTTPServer(app, ssl_options={
+        'certfile': 'cert/nopass_cert.pem',
+        'keyfile': 'cert/nopass_key.pem',
+    })
+    https_server.listen(443)
+    logging.info('Web server is waiting for requests...')
+    tornado.ioloop.IOLoop.current().spawn_callback(database_cleanup)
+    tornado.ioloop.IOLoop.instance().start()
 
 
 # Main app
@@ -483,18 +524,5 @@ if __name__ == '__main__':
     # Set up logging
     tornado.options.parse_command_line()
 
-    client = MongoClient('mongodb://mongo:27017')
-    if client is None:
-        logging.debug("Connection to database failed")
-    db = client.userdata
-    fs = GridFS(db)
-
-    http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(80)
-
-    https_server = tornado.httpserver.HTTPServer(app, ssl_options={
-        "certfile": "cert/nopass_cert.pem",
-        "keyfile": "cert/nopass_key.pem",
-    })
-    https_server.listen(443)
-    tornado.ioloop.IOLoop.instance().start()
+    # Start server
+    start_tornado()
