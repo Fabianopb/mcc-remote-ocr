@@ -46,29 +46,12 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
 
 
-
         if (fragment == null) {
             fragment = new FacebookFragment();
             fm.beginTransaction()
                     .add(R.id.fragment_container, fragment)
                     .commit();
         }
-
-        /*if (isOnline()) {
-// send username:password to database and check is it correct
-            LoginBW loginBW = new LoginBW(FragmentLogin.this, getActivity());
-            loginBW.execute(username, password);
-        } else {
-            Toast.makeText(getActivity(), R.string.noInternet, Toast.LENGTH_SHORT).show();
-        }*/
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        unregisterReceiver(receiver);
 
     }
 

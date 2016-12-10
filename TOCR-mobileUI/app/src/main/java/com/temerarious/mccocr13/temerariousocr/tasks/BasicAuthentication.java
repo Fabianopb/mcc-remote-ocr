@@ -105,6 +105,7 @@ public class BasicAuthentication extends AsyncTask<String,Void,String> {
             editor.putString("token", token);
             editor.apply();
             MainActivity.login="basicLogin";
+            Toast.makeText(context, R.string.authentication_ok, Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(context, OCRActivity.class);
             context.startActivity(intent);
 
