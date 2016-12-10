@@ -4,4 +4,11 @@
         android:key="server_ip"
         android:defaultValue="@string/server_default_ip"
         android:summary="@string/server_pref_summary"></EditTextPreference>
+    <ListPreference
+        android:key="records_amount"
+        android:entries="@array/recordsArray"
+        android:entryValues="@array/recordsArray"
+        android:defaultValue="@string/records_pref_default"
+        android:summary="@string/records_pref_summary"
+        android:title="@string/records_pref" />
 </PreferenceScreen>

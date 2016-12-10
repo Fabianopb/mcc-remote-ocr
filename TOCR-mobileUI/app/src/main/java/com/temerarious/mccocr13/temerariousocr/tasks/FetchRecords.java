@@ -51,11 +51,13 @@ public class FetchRecords extends AsyncTask<String,Void,String> {
 
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
+        String numberOfRecords = SP.getString("records_amount", context.getResources().getString(R.string.records_pref_default));
 
         String credentials = Credentials.basic(OCRActivity.token, "");
 
-        String numberOfRecords = params[0];
-        String recordsUrl = "https://" + server_ip + "/records/?amount=" + numberOfRecords;
+        Log.v("LOG-DEBUG", numberOfRecords);
+        String urlParameter = numberOfRecords.equals("All") ? "" : "?amount=" + numberOfRecords;
+        String recordsUrl = "https://" + server_ip + "/records/" + urlParameter;
 
         try {
 

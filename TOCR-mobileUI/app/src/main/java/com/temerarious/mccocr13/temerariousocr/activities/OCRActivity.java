@@ -396,4 +396,16 @@ public class OCRActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        try {
+            if(receiver != null) {
+                unregisterReceiver(receiver);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        super.onDestroy();
+    }
+
 }
