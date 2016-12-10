@@ -1,4 +1,4 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.tasks;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -8,13 +8,17 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
+import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
+import com.temerarious.mccocr13.temerariousocr.activities.RecordsActivity;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,16 +32,16 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
 /**
- * Created by fabiano.brito on 26/11/2016.
+ * Created by fabiano.brito on 30/11/2016.
  */
 
-class UploadImages extends AsyncTask<String,Void,String> {
+public class FetchRecords extends AsyncTask<String,Void,String> {
 
-    public OCRActivity source = null;
+    public RecordsActivity source = null;
     private Context context;
     private ProgressDialog loading;
 
-    UploadImages(OCRActivity fl, Context ctx) {
+    public FetchRecords(RecordsActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }
@@ -48,10 +52,10 @@ class UploadImages extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String prepare_remote_url = "https://" + server_ip + "/upload/";
-        String uid = params[0];
-        String seq = params[1];
-        int imageIndex = Integer.parseInt(seq) - 1;
+        String credentials = Credentials.basic(OCRActivity.token, "");
+
+        String numberOfRecords = params[0];
+        String recordsUrl = "https://" + server_ip + "/records/?amount=" + numberOfRecords;
 
         try {
 
@@ -64,22 +68,18 @@ class UploadImages extends AsyncTask<String,Void,String> {
                         }
                     });
 
-            RequestBody requestBody = new MultipartBuilder()
-                    .type(MultipartBuilder.FORM)
-                    .addFormDataPart("uid", uid)
-                    .addFormDataPart("seq", seq)
-                    .addFormDataPart("image", source.imageName.get(0), RequestBody.create(MediaType.parse("image/jpg"), source.imageStream.get(0)))
-                    .build();
-
             Request request = new Request.Builder()
-                    .url(prepare_remote_url)
-                    .post(requestBody)
+                    .url(recordsUrl)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
 
-        } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
+        } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();
         }
         return null;
@@ -87,36 +87,29 @@ class UploadImages extends AsyncTask<String,Void,String> {
 
     @Override
     protected void onPreExecute() {
-        loading = ProgressDialog.show(context, source.getResources().getString(R.string.uploading_images), null, true, true);
+        loading = ProgressDialog.show(context, source.getResources().getString(R.string.getting_records), null, true, true);
     }
 
     @Override
     protected void onPostExecute(String result) {
+        loading.dismiss();
         if(result != null) {
             try {
 
-                loading.dismiss();
-
                 JSONObject jsonObj = new JSONObject(result);
+                JSONArray recordsArray = jsonObj.getJSONArray("records");
 
-                String message = jsonObj.getString("message");
-                String uid = jsonObj.getString("uid");
-                String next_seq = jsonObj.getString("next_seq");
-                String ocr_result = jsonObj.getString("ocr_result");
-
-                if (!message.equals("OCR finished")) {
-                    UploadImages uploadImages = new UploadImages(source, context);
-                    uploadImages.execute(uid, next_seq);
+                if (recordsArray.length() > 0) {
+                    source.createRecordsList(recordsArray);
                 } else {
-                    source.displayTranslatedText(ocr_result);
+                    Toast.makeText(context, R.string.no_records, Toast.LENGTH_SHORT).show();
                 }
 
             } catch (JSONException e) {
                 Log.e("Parsing error", e.toString());
             }
         } else {
-            loading.dismiss();
-            Toast.makeText(context, R.string.remote_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.no_records, Toast.LENGTH_SHORT).show();
         }
     }
 

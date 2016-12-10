@@ -1,9 +1,11 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.activities;
 
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.temerarious.mccocr13.temerariousocr.R;
 
 public class SettingsActivity extends PreferenceActivity {
 
