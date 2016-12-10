@@ -171,11 +171,7 @@ public class OCRActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         receiver = new NetworkChangeReceiver();
         registerReceiver(receiver, filter);
-
-
     }
-
-
 
     public void disconnectFromFacebook() {
         LoginManager.getInstance().logOut();
@@ -241,11 +237,18 @@ public class OCRActivity extends AppCompatActivity {
 
             imgSelectorStatus.setText(getString(R.string.status_img_camera));
 
-            File file = new File(Environment.getExternalStorageDirectory(), imageName.get(0));
+            String storagePath = Environment.getExternalStorageDirectory().getPath() + "/G13OCR/images/";
+            File myDir = new File(storagePath);
+            if (!myDir.exists()) {
+                myDir.mkdirs();
+            }
+
+            String filename = imageName.get(0);
+            File myFile = new File(storagePath, filename);
+            myFile.createNewFile();
 
             FileOutputStream fo;
-            file.createNewFile();
-            fo = new FileOutputStream(file);
+            fo = new FileOutputStream(myFile);
             fo.write(imageStream.get(0));
             fo.close();
 
@@ -344,10 +347,6 @@ public class OCRActivity extends AppCompatActivity {
         startActivity(intent);
 
     }
-
-
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

@@ -7,15 +7,19 @@ package com.temerarious.mccocr13.temerariousocr.helpers;
 public class BenchmarkResults {
     double[] localElapsedTime;
     double[] remoteElapsedTime;
+    double[] dataExchanged;
     int numberOfFiles;
     double localTotal = 0;
     double remoteTotal = 0;
+    double dataTotal = 0;
     double localAverage = 0;
     double remoteAverage = 0;
+    double dataAverage = 0;
 
     public void setNumberOfFiles(int files) {
         localElapsedTime = new double[files];
         remoteElapsedTime = new double[files];
+        dataExchanged = new double[files];
         numberOfFiles = files;
     }
 
@@ -27,12 +31,20 @@ public class BenchmarkResults {
         remoteElapsedTime[position] = time;
     }
 
+    public void setDataExchanged(int position, double data) {
+        dataExchanged[position] = data;
+    }
+
     public double getLocalElapsedTime(int position) {
         return localElapsedTime[position];
     }
 
     public double getRemoteElapsedTime(int position) {
         return remoteElapsedTime[position];
+    }
+
+    public double getDataExchanged(int position) {
+        return dataExchanged[position];
     }
 
     public double getLocalTotal() {
@@ -49,14 +61,26 @@ public class BenchmarkResults {
         return remoteTotal;
     }
 
+    public double getDataExchangedTotal() {
+        for (int i = 0; i < dataExchanged.length; i++) {
+            dataTotal += dataExchanged[i];
+        }
+        return dataTotal;
+    }
+
     public double getLocalAverage() {
-        localAverage = localTotal /= numberOfFiles;
+        localAverage = localTotal / numberOfFiles;
         return localAverage;
     }
 
     public double getRemoteAverage() {
-        remoteAverage = remoteTotal /= numberOfFiles;
+        remoteAverage = remoteTotal / numberOfFiles;
         return remoteAverage;
+    }
+
+    public double getDataExchangedAverage() {
+        dataAverage = dataTotal / numberOfFiles;
+        return dataAverage;
     }
 
     public double getLocalDeviation() {
@@ -77,6 +101,15 @@ public class BenchmarkResults {
         return Math.sqrt(deviation);
     }
 
+    public double getDataExchangedDeviation() {
+        double deviation = 0;
+        for (int i = 0; i < dataExchanged.length; i++) {
+            deviation += Math.pow((dataExchanged[i] - dataAverage), 2);
+        }
+        deviation /= dataAverage;
+        return Math.sqrt(deviation);
+    }
+
     public int getLocalMaxIndex() {
         int index = 0;
         for (int i = 1; i < numberOfFiles; i++) {
@@ -91,10 +124,10 @@ public class BenchmarkResults {
         int index = 0;
         for (int i = 1; i < numberOfFiles; i++) {
             if (localElapsedTime[i] < localElapsedTime[i - 1]) {
-                index = i + 1;
+                index = i;
             }
         }
-        return index;
+        return index + 1;
     }
 
     public int getRemoteMaxIndex() {
@@ -111,10 +144,30 @@ public class BenchmarkResults {
         int index = 0;
         for (int i = 1; i < numberOfFiles; i++) {
             if (remoteElapsedTime[i] < remoteElapsedTime[i - 1]) {
-                index = i + 1;
+                index = i;
             }
         }
-        return index;
+        return index + 1;
+    }
+
+    public int getDataExchangedMaxIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (dataExchanged[i] > dataExchanged[i - 1]) {
+                index = i;
+            }
+        }
+        return index + 1;
+    }
+
+    public int getDataExchangedMinIndex() {
+        int index = 0;
+        for (int i = 1; i < numberOfFiles; i++) {
+            if (dataExchanged[i] < dataExchanged[i - 1]) {
+                index = i;
+            }
+        }
+        return index + 1;
     }
 
 }
