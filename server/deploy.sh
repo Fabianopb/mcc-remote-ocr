@@ -57,6 +57,8 @@ gcloud container clusters create backend
 gcloud config set container/use_client_certificate True
 gcloud container clusters get-credentials backend
 make -C cluster/sidecar/ add-replica
+make -C cluster/sidecar/ add-replica
+make -C cluster/sidecar/ add-replica
 kubectl create -f cluster/backend.yaml
 
 RESULT=$?
