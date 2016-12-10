@@ -19,13 +19,17 @@ def perform_ocr_and_store(fs, image, username):
 
     Returns OCR results and Object ID:s to the GridFS files.
 
+    :param fs:
     :param username:
     :param image: Image to process as a Tornado File from a multipart/form-data request.
     :return: OCR result text, original image's ID in GridFS, thumbnail's ID in GridFS
     """
     logging.debug('Processing ' + image['filename'])
     pil_image = Image.open(BytesIO(image['body']))
-    ocr_text = pytesseract.image_to_string(pil_image)
+    try:
+        ocr_text = pytesseract.image_to_string(pil_image).replace('<', '')
+    except UnicodeDecodeError:
+        ocr_text = 'Error: OCR processing could not extract a valid string from image.'
     thumbnail = yield create_thumbnail(pil_image)
     image_fs_id = yield db_safe.fs_put(fs, image['body'],
                                        content_type=image['content_type'],

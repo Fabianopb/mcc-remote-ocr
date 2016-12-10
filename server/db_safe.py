@@ -20,7 +20,8 @@ def retry_on_autoreconnect(f):
             try:
                 return f(*args, **kwargs)
             except AutoReconnect:
-                yield gen.sleep(i + 1)
+                logging.warning('MongoDB AutoReconnect: Could not connect to primary database, try # ' + str(i+1))
+                yield gen.sleep(2*(i+1))
                 continue
         logging.error('Database fail-over timed out after 5 reconnect attempts, operation failed.')
 

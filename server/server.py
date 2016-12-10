@@ -189,7 +189,8 @@ class MainHandler(RequestHandler):
 class DbTestHandler(RequestHandler):
     def get(self):
         logging.debug(self.request)
-        self.write(mongo_client.server_info())
+        response = str(mongo_client.server_info()) + '\n' + str(mongo_client.admin.command('replSetGetStatus'))
+        self.write(response)
 
 
 # Test function for adding users to the DB
@@ -255,7 +256,6 @@ class GetRecordsHandler(RequestHandler):
 
         user = yield db_safe.find_one(users_tz, {'username': username})
         records = {'records': user['records'][-amount:]}
-
         self.write(json.dumps(records, cls=JSONDateTimeEncoder))
 
 
