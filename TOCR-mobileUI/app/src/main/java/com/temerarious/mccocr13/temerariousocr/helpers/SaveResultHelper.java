@@ -29,9 +29,11 @@ public class SaveResultHelper {
     public void saveToText(String text) {
         try {
 
-            String storagePath = Environment.getExternalStorageDirectory().getPath() + "/G13OCR/";
+            String storagePath = Environment.getExternalStorageDirectory().getPath() + "/G13OCR/texts/";
             File myDir = new File(storagePath);
-            myDir.mkdirs();
+            if (!myDir.exists()) {
+                myDir.mkdirs();
+            }
 
             String filename = "OCR_result_"+System.currentTimeMillis() + ".txt";
             File myFile = new File(storagePath, filename);

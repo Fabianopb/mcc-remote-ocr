@@ -49,7 +49,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                             networkStatus="On";
                             isConnected = true;
                             OCRActivity.button_records.setVisibility(View.VISIBLE);
-                            OCRActivity.logoutFB.setVisibility(View.VISIBLE);
+//                            OCRActivity.logoutFB.setVisibility(View.VISIBLE);
                             adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, type);
                             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                             spinner.setAdapter(adapter);
@@ -64,7 +64,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         networkStatus="Off";
         Toast.makeText(getApplicationContext(), R.string.internet_off, Toast.LENGTH_SHORT).show();
         OCRActivity.button_records.setVisibility(View.GONE);
-        OCRActivity.logoutFB.setVisibility(View.GONE);
+//        OCRActivity.logoutFB.setVisibility(View.GONE);
         adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, type) {
             @Override
             public boolean isEnabled(int position) {
