@@ -390,8 +390,10 @@ public class OCRActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        retakePictureOnResume = false;
-        select_from_camera();
+        if (retakePictureOnResume) {
+            retakePictureOnResume = false;
+            select_from_camera();
+        }
     }
 
 }
