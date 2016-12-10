@@ -417,28 +417,50 @@ class UploadImageHandler(RequestHandler):
 def database_cleanup():
     while True:
         logging.info(
-            'Cleaning up old source images older than ' + str(SOURCE_IMAGE_LIFETIME) + ' days from database...')
+            'Cleaning up source images older than ' + str(SOURCE_IMAGE_LIFETIME) + ' days from database...')
         now = datetime.datetime.utcnow()
-        lifetime_limit = now - datetime.timedelta(days=SOURCE_IMAGE_LIFETIME)
+        source_lifetime_limit = now - datetime.timedelta(days=SOURCE_IMAGE_LIFETIME)
+        transaction_lifetime_limit = now - datetime.timedelta(minutes=TRANSACTION_LIFETIME)
 
+        # Find users from db, who have outdated and uncleaned records
         users = yield db_safe.find(db.users, {
-            '$and': [{'records.creation_time': {'$lt': lifetime_limit}},
+            '$and': [{'records.creation_time': {'$lt': source_lifetime_limit}},
                      {'records.cleaned': {'$in': [None, False]}}]
         })
-
         for user in users:
             for record in user['records']:
-                if record['creation_time'] < lifetime_limit and 'cleaned' not in record:
+                # Find records which are older than limit
+                if record['creation_time'] < source_lifetime_limit and 'cleaned' not in record:
                     for image in record['image_fs_ids']:
+                        # Get source image ID and remove it from the record
                         image_fs_id = image.pop('image_fs_id', None)
                         if image_fs_id is not None:
+                            # Delete image from GridFS
                             yield db_safe.fs_delete(fs, image_fs_id)
                             logging.info('Deleted image from GridFS: ' + str(image_fs_id))
                     record['cleaned'] = True
+            # Update the user's records array
             yield db_safe.update(db.users, {'username': user['username']}, {'$set': {'records': user['records']}})
             logging.info("Cleaned up records for user: " + user['username'])
 
+        # Find transactions which are older than limit
+        logging.info(
+            'Cleaning up transactions older than ' + str(TRANSACTION_LIFETIME) + ' minutes from database...')
+        transactions = yield db_safe.find(db.transactions, {'creation_time': {'$lt': transaction_lifetime_limit}})
+        for transaction in transactions:
+            for images in transaction['image_fs_ids']:
+                # Find GridFS ids for images in the transaction
+                for key, image_fs_id in images.items():
+                    # Delete image from GridFS
+                    yield db_safe.fs_delete(fs, image_fs_id)
+                    logging.info('Deleted image from GridFS: ' + str(image_fs_id))
+            # Delete transaction document from DB
+            yield db_safe.delete(db.transactions, {'_id': transaction['_id']})
+            logging.info("Deleted transaction: " + str(transaction['_id']))
+
         logging.info('Database cleanup complete')
+
+        # Wait in the background for the specified interval
         yield gen.sleep(DB_CLEANUP_INTERVAL)
 
 
@@ -462,6 +484,8 @@ def make_app():
 
 def start_tornado():
     logging.info('Starting backend server')
+
+    # Initialize database connection
     logging.info('MongoDB URI: %s' % DB_CONNECT_STRING)
     global mongo_client
     mongo_client = MongoClient(DB_CONNECT_STRING)
@@ -471,6 +495,8 @@ def start_tornado():
 
     global db
     db = mongo_client.userdata
+
+    # Initialize GridFS
     try:
         global fs
         fs = GridFS(db)
