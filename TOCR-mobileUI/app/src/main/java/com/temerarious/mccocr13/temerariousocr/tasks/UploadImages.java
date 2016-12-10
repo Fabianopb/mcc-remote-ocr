@@ -3,6 +3,7 @@ package com.temerarious.mccocr13.temerariousocr.tasks;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -64,6 +65,8 @@ public class UploadImages extends AsyncTask<String,Void,String> {
         try {
 
             long tStart = System.currentTimeMillis();
+            int applicationUID = source.getApplication().getApplicationInfo().uid;
+            long dStart = TrafficStats.getUidTxBytes(applicationUID) + TrafficStats.getUidRxBytes(applicationUID);
 
             OkHttpClient client = new OkHttpClient()
                     .setSslSocketFactory(SecureSocket.getSSLContext(context).getSocketFactory())
@@ -92,13 +95,20 @@ public class UploadImages extends AsyncTask<String,Void,String> {
                 throw new IOException("Unauthorized");
             }
 
+            String result = response.body().string();
+
             long tEnd = System.currentTimeMillis();
-            double delta = (tEnd - tStart) / 1000.0;
+            long dEnd = TrafficStats.getUidTxBytes(applicationUID) + TrafficStats.getUidRxBytes(applicationUID);
+
+            double tDelta = (tEnd - tStart) / 1000.0;
+            double dDelta = (dEnd - dStart);
+
             if (runningInBenchmark) {
-                source.benchmarkResults.setRemoteElapsedTime(imageIndex, delta);
+                source.benchmarkResults.setRemoteElapsedTime(imageIndex, tDelta);
+                source.benchmarkResults.setDataExchanged(imageIndex, dDelta);
             }
 
-            return response.body().string();
+            return result;
 
         } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
             e.printStackTrace();

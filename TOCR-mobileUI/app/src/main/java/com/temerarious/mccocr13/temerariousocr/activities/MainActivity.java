@@ -67,9 +67,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        unregisterReceiver(receiver);
-
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+        }
     }
 
     public void startLogin(View view) {

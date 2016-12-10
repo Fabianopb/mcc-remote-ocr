@@ -52,12 +52,19 @@
     <string name="image_number"><![CDATA[* image #]]></string>
     <string name="local_header"><![CDATA[<b>LOCAL</b> processing times:<br>]]></string>
     <string name="remote_header"><![CDATA[<b>REMOTE</b> processing times:<br>]]></string>
+    <string name="data_header"><![CDATA[<b>DATA EXCHANGE</b> information:<br>]]></string>
     <string name="total_time_of"><![CDATA[<b>TOTAL</b> time of&nbsp;]]></string>
     <string name="average_time_of"><![CDATA[<b>AVERAGE</b> time of&nbsp;]]></string>
     <string name="deviations_time_of"><![CDATA[<b>STANDARD DEVIATION</b> of&nbsp;]]></string>
     <string name="minimum_time_of"><![CDATA[<b>MIN</b> time on image #]]></string>
     <string name="maximum_time_of"><![CDATA[<b>MAX</b> time on image #]]></string>
+    <string name="total_data_of"><![CDATA[<b>TOTAL</b> data exchanged:&nbsp;]]></string>
+    <string name="average_data_of"><![CDATA[<b>AVERAGE</b> data exchanged:&nbsp;]]></string>
+    <string name="deviations_data_of"><![CDATA[<b>STANDARD DEVIATION</b> of&nbsp;]]></string>
+    <string name="minimum_data_of"><![CDATA[<b>MIN</b> data exchanged on image #]]></string>
+    <string name="maximum_data_of"><![CDATA[<b>MAX</b> data exchanged on image #]]></string>
     <string name="seconds"><![CDATA[&nbsp;seconds<br>]]></string>
+    <string name="bytes"><![CDATA[&nbsp;bytes<br>]]></string>
     <string name="linebreak"><![CDATA[<br>]]></string>
 
     <string name="cancelled">Cancelled</string>
