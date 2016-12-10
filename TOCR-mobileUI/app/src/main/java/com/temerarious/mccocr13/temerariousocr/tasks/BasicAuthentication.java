@@ -1,20 +1,23 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.tasks;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.temerarious.mccocr13.temerariousocr.activities.MainActivity;
+import com.temerarious.mccocr13.temerariousocr.activities.OCRActivity;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.SecureSocket;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,16 +31,16 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
 /**
- * Created by fabiano.brito on 30/11/2016.
+ * Created by fabiano.brito on 06/12/2016.
  */
 
-class FetchRecords extends AsyncTask<String,Void,String> {
+public class BasicAuthentication extends AsyncTask<String,Void,String> {
 
-    public RecordsActivity source = null;
+    public MainActivity source = null;
     private Context context;
-    private ProgressDialog loading;
+    ProgressDialog loading;
 
-    FetchRecords(RecordsActivity fl, Context ctx) {
+    public BasicAuthentication(MainActivity fl, Context ctx) {
         source = fl;
         context = ctx;
     }
@@ -48,8 +51,8 @@ class FetchRecords extends AsyncTask<String,Void,String> {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(context);
         String server_ip = SP.getString("server_ip", context.getResources().getString(R.string.server_default_ip));
 
-        String numberOfRecords = params[0];
-        String recordsUrl = "https://" + server_ip + "/records/?amount=" + numberOfRecords;
+        String prepare_remote_url = "https://" + server_ip + "/token";
+        String credentials = Credentials.basic(params[0], params[1]);
 
         try {
 
@@ -63,14 +66,18 @@ class FetchRecords extends AsyncTask<String,Void,String> {
                     });
 
             Request request = new Request.Builder()
-                    .url(recordsUrl)
+                    .url(prepare_remote_url)
+                    .header("Authorization", credentials)
                     .build();
 
             Response response = client.newCall(request).execute();
+            if (response.code() != 200) {
+                throw new IOException("Unauthorized");
+            }
             return response.body().string();
 
 
-        } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
             e.printStackTrace();
         }
         return null;
@@ -78,26 +85,34 @@ class FetchRecords extends AsyncTask<String,Void,String> {
 
     @Override
     protected void onPreExecute() {
-        loading = ProgressDialog.show(context, source.getResources().getString(R.string.getting_records), null, true, true);
+        loading = ProgressDialog.show(context, source.getResources().getString(R.string.authenticating), null, true, true);
     }
 
     @Override
     protected void onPostExecute(String result) {
         loading.dismiss();
-        if(result != null) {
-            try {
+        try {
 
-                JSONObject jsonObj = new JSONObject(result);
-                JSONArray recordsArray = jsonObj.getJSONArray("records");
-
-                source.createRecordsList(recordsArray);
-
-            } catch (JSONException e) {
-                Log.e("Parsing error", e.toString());
+            if(result == null) {
+                throw new IOException("Response was null");
             }
-        } else {
-            Toast.makeText(context, R.string.no_records, Toast.LENGTH_SHORT).show();
+
+            JSONObject jsonObj = new JSONObject(result);
+            String token = jsonObj.getString("token");
+
+            SharedPreferences sharedPref = source.getSharedPreferences("sessionData", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("token", token);
+            editor.apply();
+            MainActivity.login="basicLogin";
+            Intent intent = new Intent(context, OCRActivity.class);
+            context.startActivity(intent);
+
+        } catch (JSONException | IOException e) {
+            Log.e("Parsing error", e.toString());
+            Toast.makeText(context, R.string.authentication_failed, Toast.LENGTH_SHORT).show();
         }
+
     }
 
     @Override

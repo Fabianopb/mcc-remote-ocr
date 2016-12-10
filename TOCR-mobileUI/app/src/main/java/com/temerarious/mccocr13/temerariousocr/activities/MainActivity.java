@@ -1,12 +1,13 @@
-package com.temerarious.mccocr13.temerariousocr;
+package com.temerarious.mccocr13.temerariousocr.activities;
 
 /**
  * Created by ivan on 21.11.16.
  */
 
-import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -14,24 +15,26 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.FacebookSdk;
+import com.temerarious.mccocr13.temerariousocr.fragments.FacebookFragment;
+import com.temerarious.mccocr13.temerariousocr.R;
+import com.temerarious.mccocr13.temerariousocr.helpers.NetworkChangeReceiver;
+import com.temerarious.mccocr13.temerariousocr.tasks.BasicAuthentication;
 
 public class MainActivity extends AppCompatActivity {
 
-    // declaration of variables for fragment ets
-    EditText etLogUsername, etLogPassword;
-
-    // declaration of strings for login stage
-    String username, password;
+    public static String login="";
+    private NetworkChangeReceiver receiver;
+    private boolean isConnected = false;
+    public static String networkStatus="On";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,40 +46,41 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
 
 
+
         if (fragment == null) {
             fragment = new FacebookFragment();
             fm.beginTransaction()
                     .add(R.id.fragment_container, fragment)
                     .commit();
         }
-        etLogUsername = (EditText) findViewById(R.id.etLogUsername);
-        etLogPassword = (EditText) findViewById(R.id.etLogPassword);
 
+        /*if (isOnline()) {
+// send username:password to database and check is it correct
+            LoginBW loginBW = new LoginBW(FragmentLogin.this, getActivity());
+            loginBW.execute(username, password);
+        } else {
+            Toast.makeText(getActivity(), R.string.noInternet, Toast.LENGTH_SHORT).show();
+        }*/
 
-        // Login button
-        Button btnLogin = (Button) findViewById(R.id.login);
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                username = etLogUsername.getText().toString();
-                password = etLogPassword.getText().toString();
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+        }
+    }
 
-                if (username.equals("test1") && (password.equals("secret1")) || (username.equals("test2") && (password.equals("secret2"))
-                        || (username.equals("test3") && (password.equals("secret3"))))) {
-                    Intent intent = new Intent(getApplicationContext(), OCRActivity.class);
-                    startActivity(intent);
-                }
+    public void startLogin(View view) {
+        EditText etLogUsername = (EditText) findViewById(R.id.etLogUsername);
+        EditText etLogPassword = (EditText) findViewById(R.id.etLogPassword);
 
-                // send username:password to database and check is it correct
-                    /*LoginBW loginBW = new LoginBW(MainActivity.this, getApplicationContext());
-                    loginBW.execute(username, password);*/
-                else {
-                    Toast.makeText(getApplicationContext(), R.string.wrong_pass, Toast.LENGTH_SHORT).show();
-                }
-            }
+        String username = etLogUsername.getText().toString();
+        String password = etLogPassword.getText().toString();
 
-        });
+        BasicAuthentication basicAuthentication = new BasicAuthentication(MainActivity.this, MainActivity.this);
+        basicAuthentication.execute(username, password);
     }
 
 
@@ -109,4 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+
+
 }

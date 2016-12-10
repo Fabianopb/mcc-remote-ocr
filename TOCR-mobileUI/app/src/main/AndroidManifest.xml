@@ -3,6 +3,8 @@
     package="com.temerarious.mccocr13.temerariousocr">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -15,21 +17,32 @@
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
 
-        <activity android:name=".MainActivity">
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
+        <activity android:name=".activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".OCRActivity" />
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".activities.OCRActivity" />
+        <activity android:name=".activities.SettingsActivity" />
         <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".RecordsActivity"></activity>
+        <activity android:name=".activities.RecordsActivity" />
+        <activity android:name=".activities.DetailsActivity" />
+        <activity android:name=".activities.PreviewActivity" />
+        <activity android:name=".activities.ResultActivity" />
+        <activity android:name=".activities.BenchmarkActivity" />
+        <activity android:name=".activities.ShowImagesActivity"></activity>
     </application>
 
 </manifest>
