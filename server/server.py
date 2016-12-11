@@ -18,7 +18,6 @@ import base64
 import json
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 import requests
-import pprint
 import db_safe
 from helpers import perform_ocr_and_store, get_next_seq, generate_json_message, respond_and_log_error, \
     JSONDateTimeEncoder, create_user
@@ -43,16 +42,16 @@ db = None
 fs = None
 
 
+@gen.coroutine
 def verify_password(user_token, password):
-    # TODO: Safe db operations
-    user = verify_auth_token(user_token)
+    user = yield verify_auth_token(user_token)
     if user:  # User from token
         return user
     else:
         if user_token.endswith(FB_SUFFIX):  # FB account; cannot be authorised this way
             return user_token
 
-        user_entry = db.users.find_one({"username": user_token})
+        user_entry = yield db_safe.find_one(db.users, {"username": user_token})
 
         if user_entry is not None:
             if hashlib.sha256(password.encode('utf-8')).hexdigest() == user_entry.get('password'):
@@ -68,6 +67,7 @@ def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
     return s.dumps({'id': user})
 
 
+@gen.coroutine
 def verify_auth_token(token):
     # TODO: Safe db operations
     s = Serializer(SECRET_KEY)
@@ -79,7 +79,7 @@ def verify_auth_token(token):
         return None  # invalid token
     username = data['id']
 
-    user = db.users.find_one({"username": username})
+    user = yield db_safe.find_one(db.users, {"username": username})
     if user is not None or username.endswith(FB_SUFFIX):
         return username
     else:
@@ -114,13 +114,13 @@ def requireAuthentication(auth):
                 func(*args, username=authenticatedUser)
 
         return newFunc
-
     return applyAuthentication
 
 
 class TokenHandler(tornado.web.RequestHandler):
     @requireAuthentication(verify_password)
     def get(self, username):
+        username = yield username
         logging.debug('Token for user: ' + str(username))
 
         token = generate_auth_token(username)
@@ -131,6 +131,7 @@ class TokenHandler(tornado.web.RequestHandler):
 
 class FBTokenHandler(tornado.web.RequestHandler):
     # TODO: Make this asynchronous
+    @gen.coroutine
     def get(self):
         userToken = self.get_argument('token')
 
@@ -148,8 +149,6 @@ class FBTokenHandler(tornado.web.RequestHandler):
             respond_and_log_error(self, 401, receivedData.get('error').get('message'))
             return
 
-        pprint.pprint(receivedData)
-
         # Extract user id, use it as a username, concatenated with FB_SUFFIX,
         # so that it does not interfere with locally registered users
         userId = receivedData.get('user_id')
@@ -157,10 +156,10 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
-        user = db.users.find_one({'username': username})
+        user = yield db_safe.find_one(db.users, {'username': username})
         if user is None:
-            logging.debug('Adding to DB')
-            db.users.insert_one(create_user(username, FB_NO_PASS))
+            logging.debug('Adding Facebook user to DB: ' + username)
+            yield db_safe.insert_one(db.users, create_user(username, FB_NO_PASS))
             logging.debug('Added to DB')
 
         token = generate_auth_token(username)
@@ -188,35 +187,6 @@ class DbTestHandler(RequestHandler):
         self.write(response)
 
 
-# Test function for adding users to the DB
-class AddUserHandler(RequestHandler):
-    @gen.coroutine
-    def post(self):
-        username = self.get_body_argument('username')
-        password = self.get_body_argument('password')
-
-        db.users.insert_one(create_user(username, password))
-
-        self.write('OK')
-
-
-class AddTestuserHandler(RequestHandler):
-    @gen.coroutine
-    def get(self):
-        username = 'testuser'
-        password = 'time2work'
-
-        db.users.insert_one(create_user(username, password))
-        self.write('OK')
-
-
-class GetTestuserHandler(RequestHandler):
-    @gen.coroutine
-    def get(self):
-        user = yield db_safe.find_one(db.users, {'username': 'testuser'})
-        self.write(user.get['username'])
-
-
 class GetRecordsHandler(RequestHandler):
     """
     Gets a given amount of OCR records from the database and returns the data as JSON
@@ -225,6 +195,7 @@ class GetRecordsHandler(RequestHandler):
     @requireAuthentication(verify_password)
     @gen.coroutine
     def get(self, username):
+        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -252,6 +223,7 @@ class GetImageHandler(RequestHandler):
     @requireAuthentication(verify_password)
     @gen.coroutine
     def get(self, slug, username):
+        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -297,6 +269,7 @@ class OCRHandler(RequestHandler):
     @requireAuthentication(verify_password)
     @gen.coroutine
     def post(self, username):
+        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -322,6 +295,7 @@ class UploadImageHandler(RequestHandler):
     @requireAuthentication(verify_password)
     @gen.coroutine
     def post(self, username):
+        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -470,9 +444,6 @@ def make_app():
         (r'/fb_token', FBTokenHandler),
         (r'/other', OtherHandler),
         (r'/db/', DbTestHandler),
-        (r'/add_user/', AddUserHandler),
-        (r'/get_testuser/', AddTestuserHandler),
-        (r'/add_testuser/', AddTestuserHandler),
         (r'/ocr/', OCRHandler),
         (r'/upload/', UploadImageHandler),
         (r'/records/', GetRecordsHandler),
@@ -503,9 +474,6 @@ def start_tornado():
     except TypeError:
         logging.error('Error loading database, exiting')
         return
-
-    http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(80)
 
     https_server = tornado.httpserver.HTTPServer(app, ssl_options={
         'certfile': 'cert/nopass_cert.pem',

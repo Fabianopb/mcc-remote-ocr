@@ -70,14 +70,14 @@ fi
 echo 'Setting up MongoDB replica set...'
 
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for DB container 1 to initialize...'
-sleep 60
+echo 'Waiting 90 seconds for DB container 1 to initialize...'
+sleep 90
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for DB container 2 to initialize...'
-sleep 60
+echo 'Waiting 90 seconds for DB container 2 to initialize...'
+sleep 90
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for DB container 3 to initialize...'
-sleep 60
+echo 'Waiting 90 seconds for DB container 3 to initialize...'
+sleep 90
 
 
 RESULT=$?

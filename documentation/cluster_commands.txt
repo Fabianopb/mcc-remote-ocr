@@ -15,3 +15,6 @@ kubectl expose deployment backend --type="LoadBalancer"
 
 # Change backend container image (set version tag to whatever you used)
 kubectl set image deployment/backend backend=eu.gcr.io/mcc-2016-g13-p2/backend:v2
+
+# Connect to kubernets pod's shell
+sudo kubectl exec <pod name> -i -t -- bash -il
