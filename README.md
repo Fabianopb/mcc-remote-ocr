@@ -2,7 +2,7 @@
 
 ## How to start
 
-The application can be deployed with either of the following commands:
+The application can be deployed with either of the following commands, run in the project root:
 
 ```sh
 sudo ./deploy.sh
@@ -13,7 +13,8 @@ sudo bash deploy.sh
 ```
 
 Superuser permissions are required for the deployment. Note: Google Cloud SDK, Docker and Kubernetes are set up as the 
-root user by the script. Thus, all following commands related to these features must be run with _sudo_.
+root user by the script. Thus, all following commands related to these features must be run with _sudo_, to be able to 
+access needed configuration files.
 
 The deployment script will build the Android application as an APK file, which can then be installed to a device.
 The APK file is saved to _TOCR-mobileUI/app/build/outputs/apk/app-release.apk_.
@@ -33,10 +34,11 @@ The precreated internal users are listed in the table below.
 
 ### Re-deploying & removing backend
 
-To re-deploy the backend in Google Cloud, the previous deployment must be removed. This can be done with the following command:
+To re-deploy the backend in Google Cloud, the previous deployment must be removed. This can be done with the following commands:
 
 ```sh
-sudo ./server/undeploy.sh
+cd server
+sudo ./undeploy.sh
 ```
 
 ## Extras
@@ -47,11 +49,12 @@ Besides the Android application fully working according to the project descripti
 ## In this repository you will find
 
 ### Server
-The backend server is implemented with Python, using Tornado as the HTTP server framework. The main backend application is in _server.py_, 
+The backend server is implemented with Python 3, using Tornado as the HTTP server framework. The main backend application is in _server.py_, 
 and some helper functions are in _helpers.py_ and _db_safe.py_.
 
-The backend runs in a Docker container, which is defined in _Dockerfile_. The Docker container is deployed in a Kubernetes cluster
-on Google Container Engine. The cluster components are defined in _server/cluster/backend.yaml_.
+The backend runs in a Docker container, which is defined in _Dockerfile_. The container uses the official Python image. 
+The Docker container is deployed in a Kubernetes cluster on Google Container Engine. The cluster components are defined 
+in _server/cluster/backend.yaml_.
 
 The backend uses MongoDB as a database. The MongoDB cluster deployment functionality is in _server/cluster/sidecar_.
 The Makefile and .yaml definitions have been copied and slightly altered from https://github.com/cvallance/mongo-k8s-sidecar.

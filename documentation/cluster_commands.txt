@@ -2,10 +2,12 @@
 sudo ./deploy.sh
 
 # Update Docker image running in the cluster
-sudo ./server/update.sh
+cd server
+sudo ./update.sh
 
 # Delete backend cluster and containers
-sudo ./server/undeploy.sh
+cd server
+sudo ./undeploy.sh
 
 # Connect to kubernets pod's shell
 sudo kubectl exec <pod name> -i -t -- bash -il

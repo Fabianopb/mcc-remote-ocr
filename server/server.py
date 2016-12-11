@@ -136,7 +136,6 @@ class FBTokenHandler(RequestHandler):
         r = requests.get('https://graph.facebook.com/debug_token?input_token='
                          + user_token + '&' + 'access_token=' + APP_FB_TOKEN)
 
-        # if r.status_code != requests.codes.ok:
         if r.status_code != 200:
             respond_and_log_error(self, 401, 'Authentication failed')
             return
@@ -161,7 +160,6 @@ class FBTokenHandler(RequestHandler):
 
         token = generate_auth_token(username)
 
-        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
@@ -227,17 +225,6 @@ class GetImageHandler(RequestHandler):
         except InvalidId:
             respond_and_log_error(self, 404, 'Malformed image ID')
             return
-
-        # user = yield db_safe.find_user(db, 'testuser')
-
-        # try:
-        #     if not any(record['image_fs_ids']['thumbnail_fs_id'] == slug for record in user['records']):
-        #         if not any(record['image_fs_ids']['image_fs_id'] == slug for record in user['records']):
-        #             respond_and_log_error(self, 403, 'No permission to access image')
-        #             return
-        # except KeyError:
-        #     respond_and_log_error(self, 404, 'No such image in database')
-        #     return
 
         # Check that image exists in GridFS
         image = yield db_safe.fs_find_one(fs, {'_id': fs_id})
@@ -428,7 +415,7 @@ def database_cleanup():
         yield gen.sleep(DB_CLEANUP_INTERVAL)
 
 
-# URL routes etc.
+# URL routes
 def make_app():
     return tornado.web.Application([
         (r'/', MainHandler),
@@ -443,6 +430,7 @@ def make_app():
     ])
 
 
+# Starts the HTTP server
 def start_tornado():
     logging.info('Starting backend server')
 

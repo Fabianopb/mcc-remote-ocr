@@ -33,7 +33,6 @@ def perform_ocr_and_store(fs, image, username):
     except UnicodeDecodeError:
         ocr_text = 'Error: OCR processing could not extract a valid string from image.'
 
-    logging.debug(ocr_text)
     thumbnail = yield create_thumbnail(pil_image)
     image_fs_id = yield db_safe.fs_put(fs, image['body'],
                                        content_type=image['content_type'],
