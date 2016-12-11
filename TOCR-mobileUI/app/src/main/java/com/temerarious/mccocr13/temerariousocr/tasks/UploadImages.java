@@ -120,6 +120,7 @@ public class UploadImages extends AsyncTask<String,Void,String> {
     protected void onPreExecute() {
         int stringId = runningInBenchmark ? R.string.running_benchmark : R.string.uploading_images;
         loading = ProgressDialog.show(context, source.getResources().getString(stringId), null, true, true);
+        loading.setCancelable(false);
     }
 
     @Override

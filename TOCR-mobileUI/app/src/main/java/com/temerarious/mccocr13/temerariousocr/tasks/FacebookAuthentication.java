@@ -88,6 +88,7 @@ public class FacebookAuthentication extends AsyncTask<String,Void,String> {
     @Override
     protected void onPreExecute() {
         loading = ProgressDialog.show(context, source.getResources().getString(R.string.authenticating), null, true, true);
+        loading.setCancelable(false);
     }
 
     @Override

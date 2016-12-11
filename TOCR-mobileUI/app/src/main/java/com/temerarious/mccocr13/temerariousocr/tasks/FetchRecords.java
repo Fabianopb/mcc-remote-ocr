@@ -90,6 +90,7 @@ public class FetchRecords extends AsyncTask<String,Void,String> {
     @Override
     protected void onPreExecute() {
         loading = ProgressDialog.show(context, source.getResources().getString(R.string.getting_records), null, true, true);
+        loading.setCancelable(false);
     }
 
     @Override
