@@ -15,7 +15,7 @@ sudo bash deploy.sh
 The deployment script will build the Android application as an APK file, which can then be installed to a device.
 The script will also deploy the backend as a clustered application in Google Container Engine.
 
-###Login credentials for the application:
+### Login credentials for the application:
 
 You can either authenticate with an internal username and password or using a Facebook account.
 The precreated internal users are listed in the table below.

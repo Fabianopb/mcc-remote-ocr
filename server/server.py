@@ -27,7 +27,7 @@ SOURCE_IMAGE_LIFETIME = 7  # How many days source images are stored in DB
 TRANSACTION_LIFETIME = 60  # How many minutes unfinished transactions are stored in DB
 DB_CLEANUP_INTERVAL = 3600  # How many seconds to wait between database cleanup runs
 
-DB_CONNECT_STRING = 'mongodb://mongo-1:27017,mongo-2:27017,mongo-3:27017'
+DB_CONNECT_STRING = 'mongodb://mongo-1:27017'#,mongo-2:27017,mongo-3:27017'
 
 SECRET_KEY = '5$4asRfg_thisAppIsAwesome:)'
 TOKEN_EXPIRATION = 3600  # 60 minutes
@@ -91,18 +91,16 @@ def require_authentication(auth):
             request_handler.set_status(401)
             request_handler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
             request_handler.finish()
-            return False
+            return
 
         @functools.wraps(func)
         def new_func(*args):
             handler = args[0]
-            logging.debug('here')
             auth_header = handler.request.headers.get('Authorization')
             if auth_header is None:
                 return _authenticate(handler)
             if auth_header[:6] != 'Basic ':
                 return _authenticate(handler)
-
             auth_decoded = base64.b64decode(auth_header[6:])
             user_token, password = auth_decoded.decode().split(':', 2)
 
