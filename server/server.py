@@ -62,14 +62,13 @@ def verify_password(user_token, password):
 
 
 def generate_auth_token(user, expiration=TOKEN_EXPIRATION):
-    logging.debug('Token generated for', user)
+    logging.debug('Token generated for ' + str(user))
     s = Serializer(SECRET_KEY, expires_in=expiration)
     return s.dumps({'id': user})
 
 
 @gen.coroutine
 def verify_auth_token(token):
-    # TODO: Safe db operations
     s = Serializer(SECRET_KEY)
     try:
         data = s.loads(token)
@@ -86,39 +85,41 @@ def verify_auth_token(token):
         return None
 
 
-def requireAuthentication(auth):
-    def applyAuthentication(func):
-        def _authenticate(requestHandler):
-            requestHandler.set_status(401)
-            requestHandler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
-            requestHandler.finish()
+def require_authentication(auth):
+    def apply_authentication(func):
+        def _authenticate(request_handler):
+            request_handler.set_status(401)
+            request_handler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
+            request_handler.finish()
             return False
 
         @functools.wraps(func)
-        def newFunc(*args):
+        def new_func(*args):
             handler = args[0]
-
-            authHeader = handler.request.headers.get('Authorization')
-            if authHeader is None:
+            logging.debug('here')
+            auth_header = handler.request.headers.get('Authorization')
+            if auth_header is None:
                 return _authenticate(handler)
-            if authHeader[:6] != 'Basic ':
+            if auth_header[:6] != 'Basic ':
                 return _authenticate(handler)
 
-            authDecoded = base64.b64decode(authHeader[6:])
-            userToken, password = authDecoded.decode().split(':', 2)
+            auth_decoded = base64.b64decode(auth_header[6:])
+            user_token, password = auth_decoded.decode().split(':', 2)
 
-            authenticatedUser = auth(userToken, password)
-            if authenticatedUser is None:
+            authenticated_user = auth(user_token, password)
+            if authenticated_user is None:
                 _authenticate(handler)
             else:
-                func(*args, username=authenticatedUser)
+                func(*args, username=authenticated_user)
 
-        return newFunc
-    return applyAuthentication
+        return new_func
+
+    return apply_authentication
 
 
 class TokenHandler(tornado.web.RequestHandler):
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
+    @gen.coroutine
     def get(self, username):
         username = yield username
         logging.debug('Token for user: ' + str(username))
@@ -126,40 +127,39 @@ class TokenHandler(tornado.web.RequestHandler):
         token = generate_auth_token(username)
 
         self.write(json.dumps({'token': token.decode('ascii')}))
-        # self.write(json.dumps({'token': token.decode('ascii'), 'user' : username}))
 
 
 class FBTokenHandler(tornado.web.RequestHandler):
     # TODO: Make this asynchronous
     @gen.coroutine
     def get(self):
-        userToken = self.get_argument('token')
+        user_token = self.get_argument('token')
 
-        # Verify userToken by FB
+        # Verify user_token by FB
         r = requests.get('https://graph.facebook.com/debug_token?input_token='
-                         + userToken + '&' + 'access_token=' + APP_FB_TOKEN)
+                         + user_token + '&' + 'access_token=' + APP_FB_TOKEN)
 
         # if r.status_code != requests.codes.ok:
         if r.status_code != 200:
             respond_and_log_error(self, 401, 'Authentication failed')
             return
-        receivedData = json.loads(r.text).get('data')
+        received_data = json.loads(r.text).get('data')
 
-        if receivedData.get('error') is not None:
-            respond_and_log_error(self, 401, receivedData.get('error').get('message'))
+        if received_data.get('error') is not None:
+            respond_and_log_error(self, 401, received_data.get('error').get('message'))
             return
 
         # Extract user id, use it as a username, concatenated with FB_SUFFIX,
         # so that it does not interfere with locally registered users
-        userId = receivedData.get('user_id')
-        username = userId + FB_SUFFIX
+        user_id = received_data.get('user_id')
+        username = user_id + FB_SUFFIX
 
         # FB user still needs to be in the local database. Check if this account
         # is already there; if not, add it.
         user = yield db_safe.find_one(db.users, {'username': username})
         if user is None:
             logging.debug('Adding Facebook user to DB: ' + username)
-            yield db_safe.insert_one(db.users, create_user(username, FB_NO_PASS))
+            yield db_safe.insert(db.users, create_user(username, FB_NO_PASS))
             logging.debug('Added to DB')
 
         token = generate_auth_token(username)
@@ -169,7 +169,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
 
 
 class OtherHandler(tornado.web.RequestHandler):
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
     def get(self, username):
         self.write('You are authorised')
 
@@ -192,14 +192,13 @@ class GetRecordsHandler(RequestHandler):
     Gets a given amount of OCR records from the database and returns the data as JSON
     """
 
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
     @gen.coroutine
     def get(self, username):
         username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
-        # TODO: Implement authentication
         try:
             amount = int(self.get_query_argument('amount'))
         except tornado.web.MissingArgumentError:
@@ -220,7 +219,7 @@ class GetImageHandler(RequestHandler):
     Gets an image from the GridFS database.
     """
 
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
     @gen.coroutine
     def get(self, slug, username):
         username = yield username
@@ -266,7 +265,7 @@ class OCRHandler(RequestHandler):
     Registers a new transaction in the database, which is used for monitoring image uploads.
     """
 
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
     @gen.coroutine
     def post(self, username):
         username = yield username
@@ -292,7 +291,7 @@ class UploadImageHandler(RequestHandler):
     Handles individual image uploads and updates the user's records, when last image of a transaction is uploaded.
     """
 
-    @requireAuthentication(verify_password)
+    @require_authentication(verify_password)
     @gen.coroutine
     def post(self, username):
         username = yield username
