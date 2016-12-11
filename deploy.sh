@@ -6,6 +6,7 @@ GCLOUD_ZONE="europe-west1-c"
 echo 'Deploying the backend service as a Google Container Engine cluster.'
 echo 'NOTE: THIS WILL TAKE A WHILE!'
 
+
 echo 'Installing dependencies...'
 
 CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
@@ -24,7 +25,7 @@ fi
 
 echo 'Building docker container...'
 
-docker build -t eu.gcr.io/$PROJECT_ID/backend:v1 .
+docker build -t eu.gcr.io/$PROJECT_ID/backend:v1 ./server
 
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
@@ -37,8 +38,7 @@ fi
 
 echo 'Authenticating to Google Cloud and pushing Docker container...'
 
-chown -R ${USER} ~/.config
-gcloud auth activate-service-account tt-822@mcc-2016-g13-p2.iam.gserviceaccount.com --key-file=./key/mcc-2016-g13-p2-94921abc7259.json
+gcloud auth activate-service-account tt-822@mcc-2016-g13-p2.iam.gserviceaccount.com --key-file=./server/key/mcc-2016-g13-p2-94921abc7259.json
 gcloud config set compute/zone $GCLOUD_ZONE
 gcloud config set project $PROJECT_ID
 gcloud docker -- push eu.gcr.io/$PROJECT_ID/backend:v1
@@ -69,13 +69,13 @@ fi
 
 echo 'Setting up MongoDB replica set...'
 
-make -C cluster/sidecar/ add-replica
+make -C server/cluster/sidecar/ add-replica
 echo 'Waiting 1 minute for db container 1 to initialize...'
 sleep 60
-make -C cluster/sidecar/ add-replica
+make -C server/cluster/sidecar/ add-replica
 echo 'Waiting 1 minute for db container 2 to initialize...'
 sleep 60
-make -C cluster/sidecar/ add-replica
+make -C server/cluster/sidecar/ add-replica
 echo 'Waiting 1 minute for db container 3 to initialize...'
 sleep 60
 
@@ -91,7 +91,7 @@ fi
 
 echo 'Setting up backend application cluster...'
 
-kubectl create -f cluster/backend.yaml
+kubectl create -f server/cluster/backend.yaml
 
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
