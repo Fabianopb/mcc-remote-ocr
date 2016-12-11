@@ -3,9 +3,16 @@
 PROJECT_ID="mcc-2016-g13-p2"
 GCLOUD_ZONE="europe-west1-c"
 
-echo 'Deploying the backend service as a Google Container Engine cluster.'
+echo 'Building Android application and deploying the backend service as a Google Container Engine cluster...'
 echo 'NOTE: THIS WILL TAKE A WHILE!'
 
+sleep 5
+
+./build_apk.sh
+
+sleep 10
+
+echo 'Starting backend deployment...'
 
 echo 'Installing dependencies...'
 
