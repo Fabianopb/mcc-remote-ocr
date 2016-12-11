@@ -4,6 +4,7 @@ TOCR-mobileUI/.gradle
 TOCR-mobileUI/local.properties
 TOCR-mobileUI/.idea/workspace.xml
 TOCR-mobileUI/.idea/libraries
+TOCR-mobileUI/.idea/
 TOCR-mobileUI/build
 TOCR-mobileUI/captures
 TOCR-mobileUI/.externalNativeBuild
@@ -12,3 +13,4 @@ server/main.pyc
 server/venv/
 server/.idea/
 server/__pycache__/
+*.iml

@@ -70,13 +70,13 @@ fi
 echo 'Setting up MongoDB replica set...'
 
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for db container 1 to initialize...'
+echo 'Waiting 1 minute for DB container 1 to initialize...'
 sleep 60
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for db container 2 to initialize...'
+echo 'Waiting 1 minute for DB container 2 to initialize...'
 sleep 60
 make -C server/cluster/sidecar/ add-replica
-echo 'Waiting 1 minute for db container 3 to initialize...'
+echo 'Waiting 1 minute for DB container 3 to initialize...'
 sleep 60
 
 
@@ -103,6 +103,7 @@ fi
 
 echo 'Waiting 2 minutes for cluster to initialize...'
 sleep 120
+gcloud container clusters list
 kubectl get pods
 kubectl get services
 echo 'Done.'
