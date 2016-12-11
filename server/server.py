@@ -241,7 +241,7 @@ class GetRecordsHandler(RequestHandler):
 
         user = yield db_safe.find_one(users_tz, {'username': username})
         records = {'records': user['records'][-amount:]}
-        self.write(json.dumps(records, cls=JSONDateTimeEncoder))
+        self.write(json.dumps(records, cls=JSONDateTimeEncoder, ensure_ascii=False))
 
 
 class GetImageHandler(RequestHandler):

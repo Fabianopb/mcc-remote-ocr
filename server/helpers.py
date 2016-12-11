@@ -29,7 +29,7 @@ def perform_ocr_and_store(fs, image, username):
     logging.debug('Processing ' + image['filename'])
     pil_image = Image.open(BytesIO(image['body']))
     try:
-        ocr_text = unidecode(pytesseract.image_to_string(pil_image).replace('<', ''))
+        ocr_text = pytesseract.image_to_string(pil_image).replace('<', '')
     except UnicodeDecodeError:
         ocr_text = 'Error: OCR processing could not extract a valid string from image.'
 
