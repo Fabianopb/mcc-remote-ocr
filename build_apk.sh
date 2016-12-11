@@ -10,6 +10,6 @@ RESULT=$?
 if [ $RESULT -eq 0 ]; then
     echo 'APK saved in TOCR-mobileUI/app/build/outputs/apk/app-release.apk.'
 else
-    (>&2 echo 'ERROR: APK build failed.')
+    echo 'ERROR: APK build failed.'
 fi
 
