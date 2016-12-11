@@ -1,8 +1,9 @@
-from pymongo.errors import AutoReconnect
+from pymongo.errors import AutoReconnect, NetworkTimeout
 from pymongo.collection import Collection
 from pymongo import ReturnDocument
 from gridfs import GridFS
 from tornado import gen
+from socket import timeout
 import logging
 
 """
@@ -19,9 +20,9 @@ def retry_on_autoreconnect(f):
         for i in range(5):
             try:
                 return f(*args, **kwargs)
-            except AutoReconnect:
+            except (AutoReconnect, NetworkTimeout, timeout):
                 logging.warning('MongoDB AutoReconnect: Could not connect to primary database, try # ' + str(i+1))
-                yield gen.sleep(2*(i+1))
+                yield gen.sleep(2 + pow(2, i))
                 continue
         logging.error('Database fail-over timed out after 5 reconnect attempts, operation failed.')
 
