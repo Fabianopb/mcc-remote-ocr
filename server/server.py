@@ -91,9 +91,10 @@ def require_authentication(auth):
             request_handler.set_status(401)
             request_handler.set_header('WWW-Authenticate', 'Basic realm=temerariousRealm')
             request_handler.finish()
-            return
+            return False
 
         @functools.wraps(func)
+        @gen.coroutine
         def new_func(*args):
             handler = args[0]
             auth_header = handler.request.headers.get('Authorization')
@@ -104,14 +105,13 @@ def require_authentication(auth):
             auth_decoded = base64.b64decode(auth_header[6:])
             user_token, password = auth_decoded.decode().split(':', 2)
 
-            authenticated_user = auth(user_token, password)
+            authenticated_user = yield auth(user_token, password)
             if authenticated_user is None:
                 _authenticate(handler)
             else:
                 func(*args, username=authenticated_user)
 
         return new_func
-
     return apply_authentication
 
 
@@ -119,7 +119,6 @@ class TokenHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def get(self, username):
-        username = yield username
         logging.debug('Token for user: ' + str(username))
 
         token = generate_auth_token(username)
@@ -193,7 +192,6 @@ class GetRecordsHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def get(self, username):
-        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -220,7 +218,6 @@ class GetImageHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def get(self, slug, username):
-        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -266,7 +263,6 @@ class OCRHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def post(self, username):
-        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
@@ -292,7 +288,6 @@ class UploadImageHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def post(self, username):
-        username = yield username
         logging.debug('User: ' + username)
         logging.debug(self.request)
 
