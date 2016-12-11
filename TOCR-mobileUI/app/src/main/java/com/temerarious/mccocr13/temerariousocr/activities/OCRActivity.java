@@ -113,6 +113,7 @@ public class OCRActivity extends AppCompatActivity {
                 disconnectFromFacebook();
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
+                finish();
             }
         });
         if (MainActivity.login.equals("basicLogin"))
