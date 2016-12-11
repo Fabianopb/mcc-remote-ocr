@@ -28,6 +28,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
@@ -76,6 +77,10 @@ public class UploadImages extends AsyncTask<String,Void,String> {
                             return true;
                         }
                     });
+
+            client.setConnectTimeout(60, TimeUnit.SECONDS);
+            client.setWriteTimeout(60, TimeUnit.SECONDS);
+            client.setReadTimeout(60, TimeUnit.SECONDS);
 
             RequestBody requestBody = new MultipartBuilder()
                     .type(MultipartBuilder.FORM)
