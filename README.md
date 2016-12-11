@@ -12,14 +12,15 @@ or
 sudo bash deploy.sh
 ```
 
-Superuser permissions are required for the deployment. Note: Google Cloud SDK, Docker and Kubernetes are set up as the 
-root user by the script. Thus, all following commands related to these features must be run with _sudo_, to be able to 
-access needed configuration files.
-
 The deployment script will build the Android application as an APK file, which can then be installed to a device.
 The APK file is saved to _TOCR-mobileUI/app/build/outputs/apk/app-release.apk_.
 
 The script will also deploy the backend as a clustered application in Google Container Engine, under the project _mcc-2016-g13-p2_.
+By default, the script deploys 3 backend application pods and 3 database pods.
+
+Superuser permissions are required for the deployment. Note: Google Cloud SDK, Docker and Kubernetes are set up as the 
+root user by the script. Thus, all following commands related to these features must be run with _sudo_, to be able to 
+access needed configuration files.
 
 ### Login credentials for the application:
 
