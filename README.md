@@ -59,7 +59,8 @@ in _server/cluster/backend.yaml_.
 
 The backend uses MongoDB as a database. The MongoDB cluster deployment functionality is in _server/cluster/sidecar_.
 The Makefile and .yaml definitions have been copied and slightly altered from https://github.com/cvallance/mongo-k8s-sidecar.
-The official MongoDB image is used in the cluster containers.
+The official MongoDB image is used in the cluster containers, along with the mongo-k8s-sidecar image, which controls 
+the replica set.
 
 The certificate files used for HTTPS communication are stored in _server/cert_ and the key used for accessing the Google 
 Cloud project is in _server/key_
