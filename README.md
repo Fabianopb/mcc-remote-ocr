@@ -2,15 +2,29 @@
 
 ## How to start
 
-Stub
+The application can be deployed with either of the following commands:
 
+```sh
+sudo ./deploy.sh
+```
+or
 ```sh
 sudo bash deploy.sh
 ```
 
-Login credentials for the application:
-* User: ?
-* Password: ?
+The deployment script will build the Android application as an APK file, which can then be installed to a device.
+The script will also deploy the backend as a clustered application in Google Container Engine.
+
+###Login credentials for the application:
+
+You can either authenticate with an internal username and password or using a Facebook account.
+The precreated internal users are listed in the table below.
+
+| Username  | Password  |
+|-----------|-----------|
+| test1     | secret1   |
+| test2     | secret2   |
+| test3     | secret3   |
 
 ## Extras
 Besides the Android application fully working according to the project description, we have implemented two of the proposed challenges:
