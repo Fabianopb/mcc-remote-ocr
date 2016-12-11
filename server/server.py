@@ -117,7 +117,7 @@ def require_authentication(auth):
     return apply_authentication
 
 
-class TokenHandler(tornado.web.RequestHandler):
+class TokenHandler(RequestHandler):
     @require_authentication(verify_password)
     @gen.coroutine
     def get(self, username):
@@ -129,7 +129,7 @@ class TokenHandler(tornado.web.RequestHandler):
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
-class FBTokenHandler(tornado.web.RequestHandler):
+class FBTokenHandler(RequestHandler):
     # TODO: Make this asynchronous
     @gen.coroutine
     def get(self):
@@ -168,7 +168,7 @@ class FBTokenHandler(tornado.web.RequestHandler):
         self.write(json.dumps({'token': token.decode('ascii')}))
 
 
-class OtherHandler(tornado.web.RequestHandler):
+class OtherHandler(RequestHandler):
     @require_authentication(verify_password)
     def get(self, username):
         self.write('You are authorised')
